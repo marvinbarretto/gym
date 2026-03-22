@@ -53,6 +53,10 @@ Every AI call logs to `ai_usage`: model, task type, tokens in/out, estimated cos
 
 ## Data Model
 
+**RLS convention:** All user-scoped tables include a `user_id` column (FK to `auth.users`) with an RLS policy restricting access to `auth.uid() = user_id`. Exceptions: `exercises` (system-seeded, see below), `muscle_groups` (read-only lookup with permissive SELECT policy).
+
+**Weight unit:** kg only. No unit conversion in v1.
+
 ### Users & Profiles
 
 - `users` — Supabase Auth. Profile extends with: display name, height, weight, date of birth, fitness goal (free text), experience level (beginner/intermediate/advanced).
@@ -61,7 +65,7 @@ Every AI call logs to `ai_usage`: model, task type, tokens in/out, estimated cos
 ### Equipment & Exercises
 
 - `equipment` — machines/kit at a specific gym. Name, type (machine/free weight/cable/bodyweight/cardio), description, photo URL (optional). Scoped to gym via `gym_id`.
-- `exercises` — the movement itself, gym-agnostic. Name, primary muscle group, secondary muscle groups, description, movement type (compound/isolation), equipment type needed. Seeded with standard library, users can add custom.
+- `exercises` — the movement itself, gym-agnostic. Name, primary muscle group, secondary muscle groups, description, movement type (compound/isolation), equipment type needed. Seeded with standard library, users can add custom. Has nullable `user_id`: null = system seed (readable by all via permissive SELECT), non-null = user-created (RLS-scoped).
 - `muscle_groups` — lookup table: chest, back, shoulders, biceps, triceps, quads, hamstrings, glutes, calves, core, forearms.
 
 ### Workout Plans
@@ -72,15 +76,15 @@ Every AI call logs to `ai_usage`: model, task type, tokens in/out, estimated cos
 
 ### Sessions
 
-- `sessions` — a gym visit. User, timestamps (start/end), plan day reference (nullable), gym, pre-session energy (1-5), pre-session mood (free text, nullable), notes.
+- `sessions` — a gym visit. User, timestamps (start/end), plan day reference (nullable), gym, pre-session energy (1-5, AI-inferred from conversation), pre-session mood (free text, nullable), notes.
 - `session_sets` — individual sets. Session, exercise, set number, reps, weight (kg), RPE (1-10 Borg scale), duration (for timed exercises), notes. Atomic unit of training data.
 - `session_cardio` — cardio entries. Session, exercise type, duration, distance (nullable), avg heart rate (nullable), notes.
 
 ### Subjective Tracking
 
-- `body_check_ins` — daily entries. Date, soreness map (JSON keyed by muscle group, value 1-5), energy (1-5), sleep quality (1-5), general notes. Written by DOMS diagnostic conversation.
+- `body_check_ins` — daily entries. Date, soreness map (JSON keyed by muscle group, value 1-5), energy (1-5, AI-inferred), sleep quality (1-5, AI-inferred), general notes. Written by DOMS diagnostic conversation. Soreness map is deliberately JSON rather than a junction table — it's always read/written as a whole map, and queryability trade-off is acceptable for v1.
 - `supplements` — user's inventory. Name, type (protein/creatine/vitamin/other), dosage unit, notes.
-- `supplement_logs` — intake records. Supplement, timestamp, dosage, notes.
+- `supplement_logs` — intake records. Supplement, timestamp, dosage (numeric, unit inherited from parent `supplements.dosage_unit`), notes.
 
 ### Classes
 
@@ -94,9 +98,9 @@ Every AI call logs to `ai_usage`: model, task type, tokens in/out, estimated cos
 
 ### System
 
-- `model_config` — per-user model routing config. JSON: `{ in_session, post_session, deep_analysis, fallback }`.
+- `model_config` — per-user model routing config. Typed JSON: `{ in_session: string, post_session: string, deep_analysis: string, fallback: string }`. Settings UI reads/writes this; schema is fixed to prevent it becoming a junk drawer.
 - `ai_usage` — cost tracking. Model, task type, tokens in/out, estimated cost, timestamp.
-- `pending_tasks` — Opus async queue. Task type, status (pending/processing/complete/failed), input/output JSON, timestamps.
+- `pending_tasks` — Opus async queue. Task type, status (pending/processing/complete/failed), input/output JSON, timestamps, `retry_count` (default 0), `max_retries` (default 3), `claimed_at` (timestamp, for timeout detection). Mac job claims tasks via `UPDATE ... WHERE status = 'pending' AND claimed_at IS NULL RETURNING`. Failed tasks with exhausted retries surface in admin UI.
 
 ## API Layer
 
@@ -116,6 +120,8 @@ POST /api/classes/ingest    — screenshot upload, vision model extracts class s
 ```
 
 The chat route is the primary interface. Most user actions go through `/api/chat` — the AI decides which tools to call.
+
+All routes verify Supabase JWT via middleware. Unauthenticated requests return 401.
 
 ### AI Tool Definitions
 
@@ -183,7 +189,7 @@ Opus plan generation has access to class schedule and can incorporate classes in
 - `/api/chat` with AI SDK, tool calling, model router
 - Core tools: start_session, log_set, log_cardio, end_session, get_todays_plan, get_exercise_history
 - Seed data: exercise library, gym equipment, supplements
-- Ingest existing session data as test data
+- Ingest existing session data as test data (raw notes from first gym visit, processed via one-off script)
 - Basic conversation UI (text input first, voice second)
 - Basic session review page
 - Settings page (model selection)
@@ -218,6 +224,8 @@ Opus plan generation has access to class schedule and can incorporate classes in
 | Offline | IndexedDB queue + tap fallback | Safety net, not primary experience. Most gyms have connectivity. |
 | Model routing | Config-driven, tiered | Cheap models for real-time, Opus (free via Max) for heavy reasoning. Swappable via UI. |
 | Styling | SCSS / CSS Modules | Per project conventions (CLAUDE.md). No Tailwind. |
+| Weight unit | kg only | No unit conversion in v1. |
+| Numeric subjective fields | AI-inferred, not user-facing | User describes feelings in conversation; AI maps to 1-5 or 1-10 scales internally. |
 
 ## Open Questions for Implementation
 
