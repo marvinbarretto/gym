@@ -68,7 +68,8 @@ export async function logCardio(supabase: Supabase, data: {
 
 export async function getRecentSessions(supabase: Supabase, userId: string, limit = 10) {
   return supabase.from('sessions')
-    .select('*, session_sets(*, exercises(name)).limit(50), session_cardio(*).limit(20)')
+    // PostgREST nested limits not supported in select string — outer .limit() is sufficient
+    .select('*, session_sets(*, exercises(name)), session_cardio(*)')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
     .limit(limit)
@@ -76,7 +77,7 @@ export async function getRecentSessions(supabase: Supabase, userId: string, limi
 
 export async function getSessionDetail(supabase: Supabase, sessionId: string) {
   return supabase.from('sessions')
-    .select('*, session_sets(*, exercises(name, primary_muscle_group)).limit(100), session_cardio(*, exercises(name)).limit(20), user_gyms(name)')
+    .select('*, session_sets(*, exercises(name, primary_muscle_group)), session_cardio(*, exercises(name)), user_gyms(name)')
     .eq('id', sessionId)
     .single()
 }
