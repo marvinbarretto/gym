@@ -168,7 +168,8 @@ async function main() {
   // Live writes
   // -------------------------------------------------------------------------
 
-  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+  // Both validated above with early exit — safe to assert non-null
+  const supabase = createClient(supabaseUrl!, serviceRoleKey!, {
     db: { schema: 'gym' },
   })
 
