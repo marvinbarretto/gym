@@ -6,6 +6,10 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { MessageBubble } from './message-bubble'
 import { ChatInput } from './chat-input'
 import { StatusBar } from './status-bar'
+import { Tracker } from '@/components/session/tracker'
+import { ToastContainer } from '@/components/ui/toast'
+import { useSessionSets } from '@/lib/hooks/use-session-sets'
+import { useToasts } from '@/lib/hooks/use-toasts'
 import styles from './chat-interface.module.scss'
 
 interface ChatInterfaceProps {
@@ -15,9 +19,28 @@ interface ChatInterfaceProps {
   onEndSession: () => Promise<void>
 }
 
+function formatToolToast(toolName: string, output: unknown): string {
+  if (typeof output === 'object' && output !== null && 'message' in output) {
+    return String((output as Record<string, unknown>).message)
+  }
+  const labels: Record<string, string> = {
+    log_set: 'Set logged',
+    log_cardio: 'Cardio logged',
+    end_session: 'Session ended',
+    record_check_in: 'Check-in recorded',
+    search_exercises: 'Exercises found',
+    get_exercise_history: 'History loaded',
+    get_equipment: 'Equipment loaded',
+    get_todays_plan: 'Plan loaded',
+    add_equipment: 'Equipment added',
+  }
+  return labels[toolName] ?? `${toolName} complete`
+}
+
 export function ChatInterface({ session, isInSession, onStartSession, onEndSession }: ChatInterfaceProps) {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const toastedRef = useRef(new Set<string>())
 
   const transport = useMemo(() => new DefaultChatTransport({
     api: '/api/chat',
@@ -34,9 +57,42 @@ export function ChatInterface({ session, isInSession, onStartSession, onEndSessi
   }), [session?.id, conversationId])
 
   const { messages, status, sendMessage } = useChat({ transport })
+  const { groups, sets, refetch } = useSessionSets(isInSession ? session?.id ?? null : null)
+  const { toasts, addToast } = useToasts()
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
+  // Refetch tracker when AI finishes responding
+  const prevStatus = useRef(status)
+  useEffect(() => {
+    if (prevStatus.current === 'streaming' && status === 'ready' && isInSession) {
+      refetch()
+    }
+    prevStatus.current = status
+  }, [status, isInSession, refetch])
+
+  // Fire toasts from tool call parts
+  useEffect(() => {
+    for (const msg of messages) {
+      if (msg.role !== 'assistant') continue
+      for (const part of msg.parts ?? []) {
+        if (
+          typeof part.type === 'string' &&
+          part.type.startsWith('tool-') &&
+          'state' in part &&
+          part.state === 'output-available' &&
+          'toolCallId' in part &&
+          !toastedRef.current.has(part.toolCallId as string)
+        ) {
+          toastedRef.current.add(part.toolCallId as string)
+          const toolName = part.type.replace('tool-', '')
+          addToast(formatToolToast(toolName, 'output' in part ? part.output : null), 'success')
+        }
+      }
+    }
+  }, [messages, addToast])
+
+  // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
@@ -44,6 +100,14 @@ export function ChatInterface({ session, isInSession, onStartSession, onEndSessi
   return (
     <div className={styles.container}>
       <StatusBar />
+      {isInSession && session && (
+        <Tracker
+          session={session}
+          groups={groups}
+          totalSets={sets.length}
+          onEndSession={onEndSession}
+        />
+      )}
       <div className={styles.messages} ref={scrollRef}>
         {messages.length === 0 && (
           <div className={styles.empty}>
@@ -76,6 +140,7 @@ export function ChatInterface({ session, isInSession, onStartSession, onEndSessi
         </button>
       )}
       <ChatInput onSend={(text) => sendMessage({ text })} isLoading={isLoading} />
+      <ToastContainer toasts={toasts} />
     </div>
   )
 }
