@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react'
 import { useEffect, useRef } from 'react'
 import { MessageBubble } from './message-bubble'
 import { ChatInput } from './chat-input'
+import { StatusBar } from './status-bar'
 import styles from './chat-interface.module.scss'
 
 export function ChatInterface() {
@@ -19,6 +20,7 @@ export function ChatInterface() {
 
   return (
     <div className={styles.container}>
+      <StatusBar />
       <div className={styles.messages} ref={scrollRef}>
         {messages.length === 0 && (
           <div className={styles.empty}>

@@ -16,6 +16,44 @@
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   padding: 1.25rem;
+
+  & + & {
+    margin-top: 1rem;
+  }
+}
+
+.accountRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.accountEmail {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.logoutButton {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-family: inherit;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+  }
 }
 
 .sectionTitle {
