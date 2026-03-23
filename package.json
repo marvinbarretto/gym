@@ -8,7 +8,9 @@
     "start": "next start"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "3.0.63",
     "@ai-sdk/gateway": "3.0.77",
+    "@ai-sdk/openai": "3.0.47",
     "@ai-sdk/react": "3.0.136",
     "@supabase/ssr": "0.9.0",
     "@supabase/supabase-js": "2.99.3",

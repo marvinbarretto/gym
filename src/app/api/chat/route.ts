@@ -1,7 +1,7 @@
 import { streamText, convertToModelMessages, type UIMessage, stepCountIs } from 'ai'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createGymTools } from '@/lib/ai/tools'
-import { getModelId, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
+import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
 import { estimateCost } from '@/lib/ai/cost-tracker'
 import { GYM_COMPANION_SYSTEM_PROMPT } from '@/lib/ai/system-prompt'
 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
   const tools = createGymTools(supabase, user.id)
 
   const result = streamText({
-    model: modelId as any,
+    model: resolveModel(modelId),
     system: GYM_COMPANION_SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools,
