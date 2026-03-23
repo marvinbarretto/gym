@@ -1,0 +1,79 @@
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+export async function createSession(supabase: SupabaseClient, data: {
+  userId: string
+  gymId?: string
+  planDayId?: string
+  preEnergy?: number
+  preMood?: string
+}) {
+  return supabase.from('sessions').insert({
+    user_id: data.userId,
+    gym_id: data.gymId ?? null,
+    plan_day_id: data.planDayId ?? null,
+    pre_energy: data.preEnergy ?? null,
+    pre_mood: data.preMood ?? null,
+  }).select().single()
+}
+
+export async function endSession(supabase: SupabaseClient, sessionId: string, notes?: string) {
+  return supabase.from('sessions').update({
+    ended_at: new Date().toISOString(),
+    notes: notes ?? null,
+  }).eq('id', sessionId).select().single()
+}
+
+export async function logSet(supabase: SupabaseClient, data: {
+  sessionId: string
+  exerciseId: string
+  setNumber: number
+  reps?: number
+  weightKg?: number
+  rpe?: number
+  durationSeconds?: number
+  notes?: string
+}) {
+  return supabase.from('session_sets').insert({
+    session_id: data.sessionId,
+    exercise_id: data.exerciseId,
+    set_number: data.setNumber,
+    reps: data.reps ?? null,
+    weight_kg: data.weightKg ?? null,
+    rpe: data.rpe ?? null,
+    duration_seconds: data.durationSeconds ?? null,
+    notes: data.notes ?? null,
+  }).select().single()
+}
+
+export async function logCardio(supabase: SupabaseClient, data: {
+  sessionId: string
+  exerciseType: string
+  durationSeconds: number
+  distanceKm?: number
+  avgHeartRate?: number
+  notes?: string
+}) {
+  return supabase.from('session_cardio').insert({
+    session_id: data.sessionId,
+    exercise_type: data.exerciseType,
+    duration_seconds: data.durationSeconds,
+    distance_km: data.distanceKm ?? null,
+    avg_heart_rate: data.avgHeartRate ?? null,
+    notes: data.notes ?? null,
+  }).select().single()
+}
+
+export async function getRecentSessions(supabase: SupabaseClient, userId: string, limit = 10) {
+  return supabase.from('sessions')
+    .select('*, session_sets(*, exercises(name)).limit(50), session_cardio(*).limit(20)')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(limit)
+}
+
+export async function getSessionDetail(supabase: SupabaseClient, sessionId: string) {
+  return supabase.from('sessions')
+    .select('*, session_sets(*, exercises(name, primary_muscle_group_id)).limit(100), session_cardio(*).limit(20), user_gyms(name)')
+    .eq('id', sessionId)
+    .single()
+}
