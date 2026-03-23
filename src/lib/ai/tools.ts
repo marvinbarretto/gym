@@ -167,7 +167,12 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
         description: z.string().optional().describe('What it looks like or does'),
       }),
       execute: async (input) => {
-        const { data, error } = await addEquipment(supabase, input)
+        const { data, error } = await addEquipment(supabase, {
+          gymId: input.gym_id,
+          name: input.name,
+          type: input.type,
+          description: input.description,
+        })
         if (error) return { error: error.message }
         return { equipmentId: data.id, message: `Added ${input.name}` }
       },
