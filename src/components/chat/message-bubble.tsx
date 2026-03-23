@@ -12,9 +12,7 @@ export function MessageBubble({ role, content }: MessageBubbleProps) {
   return (
     <div className={`${styles.bubble} ${styles[role]}`}>
       {role === 'assistant' ? (
-        <div className={styles.markdown}>
-          <ReactMarkdown>{content}</ReactMarkdown>
-        </div>
+        <ReactMarkdown>{content}</ReactMarkdown>
       ) : (
         <p>{content}</p>
       )}

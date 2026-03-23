@@ -5,7 +5,7 @@
   margin-bottom: 0.5rem;
   line-height: 1.4;
 
-  p {
+  > p {
     margin: 0;
   }
 }
@@ -22,10 +22,8 @@
   color: var(--color-text, #e5e5e5);
   align-self: flex-start;
   border-bottom-left-radius: 0.25rem;
-}
 
-// Markdown styles for assistant messages
-.markdown {
+  // Markdown styles
   p {
     margin: 0 0 0.5rem;
 
