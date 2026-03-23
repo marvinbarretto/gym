@@ -3,11 +3,11 @@ import { getModelId, type ModelConfig, DEFAULT_MODEL_CONFIG } from './model-rout
 
 describe('model-router', () => {
   it('returns in_session model for in_session tier', () => {
-    expect(getModelId('in_session', DEFAULT_MODEL_CONFIG)).toBe('anthropic/claude-haiku-4.5')
+    expect(getModelId('in_session', DEFAULT_MODEL_CONFIG)).toBe('anthropic/claude-haiku-4-5')
   })
 
   it('returns post_session model for post_session tier', () => {
-    expect(getModelId('post_session', DEFAULT_MODEL_CONFIG)).toBe('anthropic/claude-sonnet-4.6')
+    expect(getModelId('post_session', DEFAULT_MODEL_CONFIG)).toBe('anthropic/claude-sonnet-4-6')
   })
 
   it('returns fallback model for unknown tier', () => {

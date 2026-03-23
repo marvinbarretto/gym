@@ -1,9 +1,14 @@
 import { streamText, convertToModelMessages, type UIMessage, stepCountIs } from 'ai'
+import type { Json } from '@/lib/supabase/types'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createGymTools } from '@/lib/ai/tools'
+import { createFreeChatTools } from '@/lib/ai/tools-free-chat'
 import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
 import { estimateCost } from '@/lib/ai/cost-tracker'
 import { buildSystemPrompt } from '@/lib/ai/system-prompt'
+import { createConversation, addMessage } from '@/lib/db/conversations'
+import { getSessionDetail } from '@/lib/db/sessions'
+import { emitToVault } from '@/lib/vault/emit'
 
 export async function POST(request: Request) {
   try {
@@ -19,8 +24,35 @@ export async function POST(request: Request) {
 
     console.log('[chat] user:', user.email)
 
-    const { messages }: { messages: UIMessage[] } = await request.json()
+    const { messages, conversationId: existingConvId, sessionId }:
+      { messages: UIMessage[]; conversationId?: string; sessionId?: string } = await request.json()
     console.log('[chat] messages:', messages.length)
+
+    // Create or reuse conversation
+    let conversationId = existingConvId
+    if (!conversationId) {
+      const { data: conv } = await createConversation(supabase, {
+        userId: user.id,
+        type: sessionId ? 'session' : 'question',
+        sessionId,
+      })
+      conversationId = conv?.id
+      console.log('[chat] created conversation:', conversationId)
+    }
+
+    // Persist the latest user message (fire-and-forget, never block stream)
+    const lastUserMsg = messages.filter(m => m.role === 'user').at(-1)
+    if (lastUserMsg && conversationId) {
+      const textContent = lastUserMsg.parts
+        ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+        .map(p => p.text)
+        .join('') ?? ''
+      addMessage(supabase, {
+        conversationId,
+        role: 'user',
+        content: textContent,
+      }).catch(err => console.error('[chat] failed to persist user message:', err))
+    }
 
     // Load user's model config (or use defaults)
     const { data: configRow } = await supabase
@@ -34,7 +66,14 @@ export async function POST(request: Request) {
     const modelId = getModelId('in_session', modelConfig)
     console.log('[chat] model:', modelId)
 
-    const tools = createGymTools(supabase, user.id)
+    // Select tools based on mode: session gets logging tools, free chat gets read-only + check-in
+    let tools
+    if (sessionId) {
+      const { start_session: _, ...sessionTools } = createGymTools(supabase, user.id)
+      tools = sessionTools
+    } else {
+      tools = createFreeChatTools(supabase, user.id)
+    }
     const systemPrompt = await buildSystemPrompt(supabase, user.id)
     console.log('[chat] system prompt loaded, length:', systemPrompt.length)
 
@@ -60,6 +99,55 @@ export async function POST(request: Request) {
         if (event.usage) {
           console.log(`[chat] tokens: ${event.usage.inputTokens}in/${event.usage.outputTokens}out`)
         }
+        // Persist assistant messages (fire-and-forget, never block stream)
+        if (conversationId) {
+          if (event.text) {
+            addMessage(supabase, {
+              conversationId,
+              role: 'assistant',
+              content: event.text,
+              toolCalls: event.toolCalls?.length ? (event.toolCalls as unknown as Json) : undefined,
+            }).catch(err => console.error('[chat] failed to persist assistant message:', err))
+          }
+          if (event.toolResults?.length) {
+            addMessage(supabase, {
+              conversationId,
+              role: 'tool',
+              content: null,
+              toolCalls: event.toolResults as unknown as Json,
+            }).catch(err => console.error('[chat] failed to persist tool results:', err))
+          }
+        }
+        // Emit vault event on session end
+        if (event.toolResults?.length) {
+          for (const tr of event.toolResults) {
+            if (tr.toolName === 'end_session' && 'result' in tr) {
+              const result = tr.result as Record<string, unknown>
+              if (sessionId) {
+                getSessionDetail(supabase, sessionId).then(({ data: detail }) => {
+                  if (!detail) return
+                  const exercises = [...new Set(
+                    (detail.session_sets ?? []).map((s: Record<string, unknown>) =>
+                      (s.exercises as Record<string, string> | null)?.name ?? 'Unknown'
+                    )
+                  )]
+                  const durationMin = detail.ended_at
+                    ? Math.round((new Date(detail.ended_at).getTime() - new Date(detail.started_at).getTime()) / 60000)
+                    : 0
+                  emitToVault({
+                    type: 'gym_session',
+                    date: detail.started_at,
+                    duration_min: durationMin,
+                    exercises: exercises as string[],
+                    total_sets: (detail.session_sets ?? []).length,
+                    summary: `${exercises.length} exercises, ${(detail.session_sets ?? []).length} sets, ${durationMin}min`,
+                    tags: ['gym', 'session'],
+                  }).catch(() => {})
+                }).catch(err => console.error('[vault] session detail fetch failed:', err))
+              }
+            }
+          }
+        }
       },
       onFinish: async ({ usage }) => {
         console.log('[chat] finished')
@@ -81,7 +169,11 @@ export async function POST(request: Request) {
       },
     })
 
-    return result.toUIMessageStreamResponse()
+    const response = result.toUIMessageStreamResponse()
+    if (conversationId) {
+      response.headers.set('X-Conversation-Id', conversationId)
+    }
+    return response
   } catch (error) {
     console.error('[chat] unhandled error:', error)
     return new Response(
