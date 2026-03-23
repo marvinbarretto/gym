@@ -37,7 +37,7 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
         reps: z.number().int().min(0).optional().describe('Number of reps completed'),
         weight_kg: z.number().min(0).optional().describe('Weight used in kg'),
         rpe: z.number().int().min(1).max(10).optional().describe('Rate of Perceived Exertion, inferred from user description'),
-        duration_seconds: z.number().int().optional().describe('Duration for timed exercises like planks'),
+        duration_s: z.number().int().optional().describe('Duration in seconds for timed exercises like planks'),
         notes: z.string().optional().describe('Any notes about this set'),
       }),
       execute: async (input) => {
@@ -48,7 +48,7 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
           reps: input.reps,
           weightKg: input.weight_kg,
           rpe: input.rpe,
-          durationSeconds: input.duration_seconds,
+          durationS: input.duration_s,
           notes: input.notes,
         })
         if (error) return { error: error.message }
@@ -60,8 +60,8 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
       description: 'Log a cardio exercise (treadmill, bike, rowing, etc).',
       inputSchema: z.object({
         session_id: z.string().uuid().describe('Current session ID'),
-        exercise_type: z.string().describe('Type of cardio (treadmill, bike, rowing, elliptical)'),
-        duration_seconds: z.number().int().min(0).describe('How long in seconds'),
+        exercise_id: z.string().uuid().describe('The cardio exercise performed'),
+        duration_s: z.number().int().min(0).describe('How long in seconds'),
         distance_km: z.number().min(0).optional().describe('Distance covered in km'),
         avg_heart_rate: z.number().int().optional().describe('Average heart rate'),
         notes: z.string().optional(),
@@ -69,8 +69,8 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
       execute: async (input) => {
         const { data, error } = await logCardio(supabase, {
           sessionId: input.session_id,
-          exerciseType: input.exercise_type,
-          durationSeconds: input.duration_seconds,
+          exerciseId: input.exercise_id,
+          durationS: input.duration_s,
           distanceKm: input.distance_km,
           avgHeartRate: input.avg_heart_rate,
           notes: input.notes,
@@ -129,7 +129,7 @@ export function createGymTools(supabase: SupabaseClient, userId: string) {
     search_exercises: tool({
       description: 'Search for exercises by muscle group, equipment type, movement type, or name.',
       inputSchema: z.object({
-        muscle_group_id: z.string().uuid().optional(),
+        muscle_group_id: z.number().int().optional().describe('Muscle group ID (smallint)'),
         equipment_type: z.enum(['machine', 'free_weight', 'cable', 'bodyweight', 'cardio']).optional(),
         movement_type: z.enum(['compound', 'isolation']).optional(),
         query: z.string().optional().describe('Search by name'),

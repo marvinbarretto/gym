@@ -30,7 +30,7 @@ export async function logSet(supabase: SupabaseClient, data: {
   reps?: number
   weightKg?: number
   rpe?: number
-  durationSeconds?: number
+  durationS?: number
   notes?: string
 }) {
   return supabase.from('session_sets').insert({
@@ -40,23 +40,23 @@ export async function logSet(supabase: SupabaseClient, data: {
     reps: data.reps ?? null,
     weight_kg: data.weightKg ?? null,
     rpe: data.rpe ?? null,
-    duration_seconds: data.durationSeconds ?? null,
+    duration_s: data.durationS ?? null,
     notes: data.notes ?? null,
   }).select().single()
 }
 
 export async function logCardio(supabase: SupabaseClient, data: {
   sessionId: string
-  exerciseType: string
-  durationSeconds: number
+  exerciseId: string
+  durationS: number
   distanceKm?: number
   avgHeartRate?: number
   notes?: string
 }) {
   return supabase.from('session_cardio').insert({
     session_id: data.sessionId,
-    exercise_type: data.exerciseType,
-    duration_seconds: data.durationSeconds,
+    exercise_id: data.exerciseId,
+    duration_s: data.durationS,
     distance_km: data.distanceKm ?? null,
     avg_heart_rate: data.avgHeartRate ?? null,
     notes: data.notes ?? null,
@@ -73,7 +73,7 @@ export async function getRecentSessions(supabase: SupabaseClient, userId: string
 
 export async function getSessionDetail(supabase: SupabaseClient, sessionId: string) {
   return supabase.from('sessions')
-    .select('*, session_sets(*, exercises(name, primary_muscle_group_id)).limit(100), session_cardio(*).limit(20), user_gyms(name)')
+    .select('*, session_sets(*, exercises(name, primary_muscle_group)).limit(100), session_cardio(*, exercises(name)).limit(20), user_gyms(name)')
     .eq('id', sessionId)
     .single()
 }

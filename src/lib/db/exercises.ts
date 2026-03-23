@@ -1,15 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 export async function searchExercises(supabase: SupabaseClient, filters: {
-  muscleGroupId?: string
+  muscleGroupId?: number
   equipmentType?: string
   movementType?: string
   query?: string
 }) {
-  let q = supabase.from('exercises').select('*, muscle_groups!exercises_primary_muscle_group_id_fkey(name)')
+  let q = supabase.from('exercises').select('*, muscle_groups!exercises_primary_muscle_group_fkey(name)')
 
   if (filters.muscleGroupId) {
-    q = q.eq('primary_muscle_group_id', filters.muscleGroupId)
+    q = q.eq('primary_muscle_group', filters.muscleGroupId)
   }
   if (filters.equipmentType) {
     q = q.eq('equipment_type', filters.equipmentType)
