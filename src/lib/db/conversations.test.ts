@@ -30,7 +30,7 @@ describe('conversations', () => {
     expect(result.conversation_id).toBe('conv-1')
     expect(result.role).toBe('user')
     expect(result.content).toBe('hello')
-    expect(result.tool_calls).toBeNull()
+    expect(result.tool_calls).toBeUndefined()
   })
 
   it('buildAddMessage includes tool_calls when provided', () => {

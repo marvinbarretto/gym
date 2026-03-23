@@ -127,7 +127,7 @@ export type Database = {
       }
       conversation_messages: {
         Row: {
-          content: string
+          content: string | null
           conversation_id: string
           created_at: string
           id: string
@@ -135,7 +135,7 @@ export type Database = {
           tool_calls: Json | null
         }
         Insert: {
-          content: string
+          content?: string | null
           conversation_id: string
           created_at?: string
           id?: string
@@ -143,7 +143,7 @@ export type Database = {
           tool_calls?: Json | null
         }
         Update: {
-          content?: string
+          content?: string | null
           conversation_id?: string
           created_at?: string
           id?: string

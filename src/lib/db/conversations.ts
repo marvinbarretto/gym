@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase/types'
+import type { Database, Json } from '@/lib/supabase/types'
 
 type Supabase = SupabaseClient<Database, 'gym'>
 
@@ -21,13 +21,13 @@ export function buildAddMessage(data: {
   conversationId: string
   role: 'user' | 'assistant' | 'system' | 'tool'
   content: string | null
-  toolCalls?: unknown[]
+  toolCalls?: Json
 }) {
   return {
     conversation_id: data.conversationId,
     role: data.role,
     content: data.content,
-    tool_calls: data.toolCalls ?? null,
+    tool_calls: data.toolCalls ?? undefined,
   }
 }
 
@@ -46,7 +46,7 @@ export async function addMessage(supabase: Supabase, data: {
   conversationId: string
   role: 'user' | 'assistant' | 'system' | 'tool'
   content: string | null
-  toolCalls?: unknown[]
+  toolCalls?: Json
 }) {
   return supabase.from('conversation_messages')
     .insert(buildAddMessage(data))
