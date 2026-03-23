@@ -1,10 +1,13 @@
 .container {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  background: var(--background, #0a0a0a);
-  // Leave room for bottom nav if present
-  padding-bottom: 0;
+  // Fill available space from parent flex layout — no fixed height needed.
+  // min-height: 0 allows the messages area to scroll within the flex child.
+  flex: 1;
+  min-height: 0;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .messages {

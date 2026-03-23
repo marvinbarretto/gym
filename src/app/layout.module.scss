@@ -1,4 +1,9 @@
 .main {
+  // Grow to fill space between body top and fixed nav.
+  // Also a flex container so page content (e.g. chat) can flex: 1 within it.
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
   padding-bottom: 4rem;
 }
