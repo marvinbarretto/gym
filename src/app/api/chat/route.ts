@@ -4,6 +4,7 @@ import { createGymTools } from '@/lib/ai/tools'
 import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
 import { estimateCost } from '@/lib/ai/cost-tracker'
 import { buildSystemPrompt } from '@/lib/ai/system-prompt'
+import { createConversation, addMessage } from '@/lib/db/conversations'
 
 export async function POST(request: Request) {
   try {
@@ -19,8 +20,35 @@ export async function POST(request: Request) {
 
     console.log('[chat] user:', user.email)
 
-    const { messages }: { messages: UIMessage[] } = await request.json()
+    const { messages, conversationId: existingConvId, sessionId }:
+      { messages: UIMessage[]; conversationId?: string; sessionId?: string } = await request.json()
     console.log('[chat] messages:', messages.length)
+
+    // Create or reuse conversation
+    let conversationId = existingConvId
+    if (!conversationId) {
+      const { data: conv } = await createConversation(supabase, {
+        userId: user.id,
+        type: sessionId ? 'session' : 'question',
+        sessionId,
+      })
+      conversationId = conv?.id
+      console.log('[chat] created conversation:', conversationId)
+    }
+
+    // Persist the latest user message (fire-and-forget, never block stream)
+    const lastUserMsg = messages.filter(m => m.role === 'user').at(-1)
+    if (lastUserMsg && conversationId) {
+      const textContent = lastUserMsg.parts
+        ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+        .map(p => p.text)
+        .join('') ?? ''
+      addMessage(supabase, {
+        conversationId,
+        role: 'user',
+        content: textContent,
+      }).catch(err => console.error('[chat] failed to persist user message:', err))
+    }
 
     // Load user's model config (or use defaults)
     const { data: configRow } = await supabase
@@ -60,6 +88,25 @@ export async function POST(request: Request) {
         if (event.usage) {
           console.log(`[chat] tokens: ${event.usage.inputTokens}in/${event.usage.outputTokens}out`)
         }
+        // Persist assistant messages (fire-and-forget, never block stream)
+        if (conversationId) {
+          if (event.text) {
+            addMessage(supabase, {
+              conversationId,
+              role: 'assistant',
+              content: event.text,
+              toolCalls: event.toolCalls?.length ? event.toolCalls : undefined,
+            }).catch(err => console.error('[chat] failed to persist assistant message:', err))
+          }
+          if (event.toolResults?.length) {
+            addMessage(supabase, {
+              conversationId,
+              role: 'tool',
+              content: null,
+              toolCalls: event.toolResults,
+            }).catch(err => console.error('[chat] failed to persist tool results:', err))
+          }
+        }
       },
       onFinish: async ({ usage }) => {
         console.log('[chat] finished')
@@ -81,7 +128,11 @@ export async function POST(request: Request) {
       },
     })
 
-    return result.toUIMessageStreamResponse()
+    const response = result.toUIMessageStreamResponse()
+    if (conversationId) {
+      response.headers.set('X-Conversation-Id', conversationId)
+    }
+    return response
   } catch (error) {
     console.error('[chat] unhandled error:', error)
     return new Response(
