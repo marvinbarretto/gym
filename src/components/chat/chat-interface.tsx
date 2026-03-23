@@ -106,6 +106,7 @@ export function ChatInterface({ session, isInSession, onStartSession, onEndSessi
           groups={groups}
           totalSets={sets.length}
           onEndSession={onEndSession}
+          onRefetch={refetch}
         />
       )}
       <div className={styles.messages} ref={scrollRef}>

@@ -10,9 +10,10 @@ interface TrackerProps {
   groups: ExerciseGroupType[]
   totalSets: number
   onEndSession: () => Promise<void>
+  onRefetch?: () => void
 }
 
-export function Tracker({ session, groups, totalSets, onEndSession }: TrackerProps) {
+export function Tracker({ session, groups, totalSets, onEndSession, onRefetch }: TrackerProps) {
   const [expanded, setExpanded] = useState(true)
   const prevGroupCount = useRef(groups.length)
   const elapsed = Math.round((Date.now() - new Date(session.started_at).getTime()) / 60000)
@@ -53,7 +54,7 @@ export function Tracker({ session, groups, totalSets, onEndSession }: TrackerPro
           <div className={styles.empty}>No exercises logged yet</div>
         )}
         {groups.map(g => (
-          <ExerciseGroup key={g.exerciseId} name={g.exerciseName} sets={g.sets} />
+          <ExerciseGroup key={g.exerciseId} name={g.exerciseName} sets={g.sets} onRefetch={onRefetch} />
         ))}
       </div>
     </div>
