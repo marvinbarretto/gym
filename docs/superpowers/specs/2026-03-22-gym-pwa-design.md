@@ -26,7 +26,7 @@ The database has a lean normalised schema for essential entities (sessions, exer
 | Styling | SCSS / CSS Modules (no Tailwind) |
 | AI | Vercel AI SDK v6, tool calling, streaming |
 | Voice | Web Speech API (browser-native, free, on-device STT) |
-| Database | Supabase Pro (Postgres, RLS, Auth, real-time) |
+| Database | Supabase Free — shared collectr project, `gym` schema (Postgres, RLS, Auth, real-time) |
 | Hosting | Vercel |
 | Testing | Vitest (unit), Playwright (E2E) |
 
@@ -52,6 +52,8 @@ Opus runs on the local Mac (Max subscription, $0 API cost). A `pending_tasks` ta
 Every AI call logs to `ai_usage`: model, task type, tokens in/out, estimated cost, timestamp. Powers cost-per-session dashboards and model comparison analytics.
 
 ## Data Model
+
+**Schema:** All tables live under `gym` schema (`CREATE SCHEMA gym;`) within the shared collectr Supabase project. This keeps gym tables completely isolated from collectr's `public` schema. Auth is shared via `auth.users`.
 
 **RLS convention:** All user-scoped tables include a `user_id` column (FK to `auth.users`) with an RLS policy restricting access to `auth.uid() = user_id`. Exceptions: `exercises` (system-seeded, see below), `muscle_groups` (read-only lookup with permissive SELECT policy).
 
@@ -217,7 +219,7 @@ Opus plan generation has access to class schedule and can incorporate classes in
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
 | Data approach | Hybrid (structured + conversational) | Clean queryable data with conversation as insurance for unstructured context |
-| Database | Supabase Pro | Auth, RLS, real-time, backups. Multi-user ready. Known tooling. |
+| Database | Supabase Free (shared collectr project, `gym` schema) | Avoids $25+/mo Pro cost. Free tier has 2-project limit; sharing via schema separation costs $0. Auth shared with collectr. |
 | Framework | Next.js + AI SDK v6 | Conversational AI is the core UX. AI SDK purpose-built for this. |
 | RPE scale | 1-10 Borg scale | Industry standard. AI infers from conversation, user doesn't pick numbers. |
 | Voice | Web Speech API | Free, on-device, no API cost. LLM processes text only. |
@@ -230,6 +232,6 @@ Opus plan generation has access to class schedule and can incorporate classes in
 ## Open Questions for Implementation
 
 - Exact exercise seed data source — scrape a fitness API or curate manually?
-- Supabase project name and region
+- ~~Supabase project name and region~~ — resolved: sharing collectr project with `gym` schema
 - PWA icon and branding
 - Whether to use `next-pwa` or manual service worker setup (depends on Next.js 16 compatibility)

@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
 
-export async function createSession(supabase: SupabaseClient, data: {
+type Supabase = SupabaseClient<Database, 'gym'>
+
+export async function createSession(supabase: Supabase, data: {
   userId: string
   gymId?: string
   planDayId?: string
@@ -16,14 +19,14 @@ export async function createSession(supabase: SupabaseClient, data: {
   }).select().single()
 }
 
-export async function endSession(supabase: SupabaseClient, sessionId: string, notes?: string) {
+export async function endSession(supabase: Supabase, sessionId: string, notes?: string) {
   return supabase.from('sessions').update({
     ended_at: new Date().toISOString(),
     notes: notes ?? null,
   }).eq('id', sessionId).select().single()
 }
 
-export async function logSet(supabase: SupabaseClient, data: {
+export async function logSet(supabase: Supabase, data: {
   sessionId: string
   exerciseId: string
   setNumber: number
@@ -45,7 +48,7 @@ export async function logSet(supabase: SupabaseClient, data: {
   }).select().single()
 }
 
-export async function logCardio(supabase: SupabaseClient, data: {
+export async function logCardio(supabase: Supabase, data: {
   sessionId: string
   exerciseId: string
   durationS: number
@@ -63,7 +66,7 @@ export async function logCardio(supabase: SupabaseClient, data: {
   }).select().single()
 }
 
-export async function getRecentSessions(supabase: SupabaseClient, userId: string, limit = 10) {
+export async function getRecentSessions(supabase: Supabase, userId: string, limit = 10) {
   return supabase.from('sessions')
     .select('*, session_sets(*, exercises(name)).limit(50), session_cardio(*).limit(20)')
     .eq('user_id', userId)
@@ -71,7 +74,7 @@ export async function getRecentSessions(supabase: SupabaseClient, userId: string
     .limit(limit)
 }
 
-export async function getSessionDetail(supabase: SupabaseClient, sessionId: string) {
+export async function getSessionDetail(supabase: Supabase, sessionId: string) {
   return supabase.from('sessions')
     .select('*, session_sets(*, exercises(name, primary_muscle_group)).limit(100), session_cardio(*, exercises(name)).limit(20), user_gyms(name)')
     .eq('id', sessionId)

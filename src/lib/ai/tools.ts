@@ -1,11 +1,14 @@
 import { tool } from 'ai'
 import { z } from 'zod'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
+
+type Supabase = SupabaseClient<Database, 'gym'>
 import { createSession, endSession, logSet, logCardio } from '@/lib/db/sessions'
 import { searchExercises, getExerciseHistory } from '@/lib/db/exercises'
 import { getEquipment, addEquipment } from '@/lib/db/equipment'
 
-export function createGymTools(supabase: SupabaseClient, userId: string) {
+export function createGymTools(supabase: Supabase, userId: string) {
   return {
     start_session: tool({
       description: 'Start a new gym session. Call this when the user arrives at the gym or wants to begin a workout.',

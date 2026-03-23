@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
 
-export async function getEquipment(supabase: SupabaseClient, gymId: string) {
+type Supabase = SupabaseClient<Database, 'gym'>
+
+export async function getEquipment(supabase: Supabase, gymId: string) {
   return supabase.from('equipment')
     .select('*')
     .eq('gym_id', gymId)
@@ -8,7 +11,7 @@ export async function getEquipment(supabase: SupabaseClient, gymId: string) {
     .limit(100)
 }
 
-export async function addEquipment(supabase: SupabaseClient, data: {
+export async function addEquipment(supabase: Supabase, data: {
   gymId: string
   name: string
   type: 'machine' | 'free_weight' | 'cable' | 'bodyweight' | 'cardio'

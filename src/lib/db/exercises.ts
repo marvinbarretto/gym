@@ -1,6 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
 
-export async function searchExercises(supabase: SupabaseClient, filters: {
+type Supabase = SupabaseClient<Database, 'gym'>
+
+export async function searchExercises(supabase: Supabase, filters: {
   muscleGroupId?: number
   equipmentType?: string
   movementType?: string
@@ -24,7 +27,7 @@ export async function searchExercises(supabase: SupabaseClient, filters: {
   return q.order('name').limit(20)
 }
 
-export async function getExerciseHistory(supabase: SupabaseClient, exerciseId: string, limit = 20) {
+export async function getExerciseHistory(supabase: Supabase, exerciseId: string, limit = 20) {
   return supabase.from('session_sets')
     .select('*, sessions(started_at)')
     .eq('exercise_id', exerciseId)
