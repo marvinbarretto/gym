@@ -2,6 +2,7 @@ import { streamText, convertToModelMessages, type UIMessage, stepCountIs } from 
 import type { Json } from '@/lib/supabase/types'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createGymTools } from '@/lib/ai/tools'
+import { createFreeChatTools } from '@/lib/ai/tools-free-chat'
 import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
 import { estimateCost } from '@/lib/ai/cost-tracker'
 import { buildSystemPrompt } from '@/lib/ai/system-prompt'
@@ -63,7 +64,14 @@ export async function POST(request: Request) {
     const modelId = getModelId('in_session', modelConfig)
     console.log('[chat] model:', modelId)
 
-    const tools = createGymTools(supabase, user.id)
+    // Select tools based on mode: session gets logging tools, free chat gets read-only + check-in
+    let tools
+    if (sessionId) {
+      const { start_session: _, ...sessionTools } = createGymTools(supabase, user.id)
+      tools = sessionTools
+    } else {
+      tools = createFreeChatTools(supabase, user.id)
+    }
     const systemPrompt = await buildSystemPrompt(supabase, user.id)
     console.log('[chat] system prompt loaded, length:', systemPrompt.length)
 
