@@ -1,0 +1,56 @@
+.inputBar {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface, #1e1e1e);
+  border-top: 1px solid var(--color-border, #333);
+  flex-shrink: 0;
+}
+
+.textInput {
+  flex: 1;
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #333);
+  background: var(--background, #0a0a0a);
+  color: var(--color-text, #e5e5e5);
+  font-size: 1rem;
+  font-family: inherit;
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-muted, #999);
+  }
+
+  &:focus {
+    border-color: var(--color-accent, #2563eb);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.sendButton {
+  padding: 0.625rem 1.25rem;
+  border-radius: 999px;
+  border: none;
+  background: var(--color-accent, #2563eb);
+  color: white;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
