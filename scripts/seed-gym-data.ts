@@ -113,8 +113,8 @@ const SUPPLEMENTS_DATA: Array<{ name: string; type: 'protein' | 'creatine' | 'vi
 // Flat strings for now — matches ModelConfig type in src/lib/ai/model-router.ts.
 // Fallback routing (primary/fallback per tier) is a Phase 2 feature.
 const MODEL_CONFIG = {
-  in_session:    'anthropic/claude-haiku-4.5',
-  post_session:  'anthropic/claude-sonnet-4.6',
+  in_session:    'anthropic/claude-haiku-4-5',
+  post_session:  'anthropic/claude-sonnet-4-6',
   deep_analysis: 'opus-local',
   fallback:      'openrouter/google/gemini-2.5-flash-lite',
 }

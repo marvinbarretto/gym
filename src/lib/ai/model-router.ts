@@ -10,8 +10,8 @@ export interface ModelConfig {
 }
 
 export const DEFAULT_MODEL_CONFIG: ModelConfig = {
-  in_session: 'anthropic/claude-haiku-4.5',
-  post_session: 'anthropic/claude-sonnet-4.6',
+  in_session: 'anthropic/claude-haiku-4-5',
+  post_session: 'anthropic/claude-sonnet-4-6',
   deep_analysis: 'opus-local',
   fallback: 'google/gemini-2.5-flash',
 }
