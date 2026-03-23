@@ -9,6 +9,7 @@ export async function createSession(supabase: Supabase, data: {
   planDayId?: string
   preEnergy?: number
   preMood?: string
+  startedAt?: string
 }) {
   return supabase.from('sessions').insert({
     user_id: data.userId,
@@ -16,12 +17,13 @@ export async function createSession(supabase: Supabase, data: {
     plan_day_id: data.planDayId ?? null,
     pre_energy: data.preEnergy ?? null,
     pre_mood: data.preMood ?? null,
+    ...(data.startedAt ? { started_at: data.startedAt } : {}),
   }).select().single()
 }
 
-export async function endSession(supabase: Supabase, sessionId: string, notes?: string) {
+export async function endSession(supabase: Supabase, sessionId: string, notes?: string, endedAt?: string) {
   return supabase.from('sessions').update({
-    ended_at: new Date().toISOString(),
+    ended_at: endedAt ?? new Date().toISOString(),
     notes: notes ?? null,
   }).eq('id', sessionId).select().single()
 }

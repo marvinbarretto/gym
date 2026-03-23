@@ -11,12 +11,13 @@ import { getEquipment, addEquipment } from '@/lib/db/equipment'
 export function createGymTools(supabase: Supabase, userId: string) {
   return {
     start_session: tool({
-      description: 'Start a new gym session. Call this when the user arrives at the gym or wants to begin a workout.',
+      description: 'Start a new gym session. Call this when the user arrives at the gym or wants to begin/log a workout. For past sessions, set started_at to the date/time.',
       inputSchema: z.object({
         gym_id: z.string().uuid().optional().describe('The gym where the session is taking place'),
         plan_day_id: z.string().uuid().optional().describe('The plan day to follow, if any'),
         pre_energy: z.number().min(1).max(5).optional().describe('Pre-session energy level, inferred from conversation'),
         pre_mood: z.string().optional().describe('Pre-session mood description'),
+        started_at: z.string().optional().describe('ISO timestamp for when the session started. Use for retrospective logging of past sessions. Omit to use current time.'),
       }),
       execute: async (input) => {
         const { data, error } = await createSession(supabase, {
@@ -25,6 +26,7 @@ export function createGymTools(supabase: Supabase, userId: string) {
           planDayId: input.plan_day_id,
           preEnergy: input.pre_energy,
           preMood: input.pre_mood,
+          startedAt: input.started_at,
         })
         if (error) return { error: error.message }
         return { sessionId: data.id, message: 'Session started' }
@@ -84,13 +86,14 @@ export function createGymTools(supabase: Supabase, userId: string) {
     }),
 
     end_session: tool({
-      description: 'End the current gym session.',
+      description: 'End the current gym session. For past sessions, set ended_at to when it finished.',
       inputSchema: z.object({
         session_id: z.string().uuid().describe('Session to end'),
         notes: z.string().optional().describe('Overall session notes'),
+        ended_at: z.string().optional().describe('ISO timestamp for when the session ended. Use for retrospective logging. Omit to use current time.'),
       }),
       execute: async (input) => {
-        const { data, error } = await endSession(supabase, input.session_id, input.notes)
+        const { data, error } = await endSession(supabase, input.session_id, input.notes, input.ended_at)
         if (error) return { error: error.message }
         return { message: 'Session ended', endedAt: data.ended_at }
       },
