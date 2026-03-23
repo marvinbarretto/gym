@@ -1,0 +1,43 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.resumePrompt {
+  padding: 1rem;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+  text-align: center;
+
+  p {
+    color: var(--color-muted, #999);
+    margin-bottom: 0.75rem;
+  }
+}
+
+.resumeActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+
+  button {
+    padding: 0.5rem 1.25rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border, #333);
+    background: var(--color-surface, #1a1a1a);
+    color: var(--color-text, #e0e0e0);
+    cursor: pointer;
+    font-size: 0.875rem;
+
+    &:hover {
+      background: var(--color-border, #333);
+    }
+  }
+
+  .secondary {
+    color: var(--color-muted, #999);
+  }
+}

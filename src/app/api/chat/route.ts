@@ -1,4 +1,5 @@
 import { streamText, convertToModelMessages, type UIMessage, stepCountIs } from 'ai'
+import type { Json } from '@/lib/supabase/types'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { createGymTools } from '@/lib/ai/tools'
 import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
               conversationId,
               role: 'assistant',
               content: event.text,
-              toolCalls: event.toolCalls?.length ? event.toolCalls : undefined,
+              toolCalls: event.toolCalls?.length ? (event.toolCalls as unknown as Json) : undefined,
             }).catch(err => console.error('[chat] failed to persist assistant message:', err))
           }
           if (event.toolResults?.length) {
@@ -103,7 +104,7 @@ export async function POST(request: Request) {
               conversationId,
               role: 'tool',
               content: null,
-              toolCalls: event.toolResults,
+              toolCalls: event.toolResults as unknown as Json,
             }).catch(err => console.error('[chat] failed to persist tool results:', err))
           }
         }
