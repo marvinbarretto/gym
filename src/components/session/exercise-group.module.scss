@@ -1,0 +1,30 @@
+.group {
+  margin-bottom: 0.75rem;
+}
+
+.name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text, #e0e0e0);
+  margin-bottom: 0.25rem;
+}
+
+.table {
+  width: 100%;
+  font-size: 0.75rem;
+  color: var(--color-muted, #999);
+  border-collapse: collapse;
+
+  th {
+    text-align: left;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--color-muted, #666);
+    padding: 0.125rem 0;
+  }
+
+  td {
+    padding: 0.125rem 0;
+  }
+}
