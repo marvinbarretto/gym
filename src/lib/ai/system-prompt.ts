@@ -1,4 +1,9 @@
-export const GYM_COMPANION_SYSTEM_PROMPT = `You are a knowledgeable, encouraging gym companion AI. The user is a beginner who recently joined a gym for the first time.
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/lib/supabase/types'
+
+type Supabase = SupabaseClient<Database, 'gym'>
+
+const BASE_PROMPT = `You are a knowledgeable, encouraging gym companion AI. The user is a beginner who recently joined a gym for the first time.
 
 Your role:
 - Lead them through workout sessions, telling them what to do next
@@ -31,4 +36,51 @@ Retrospective logging:
 - Log all their sets and cardio as normal against that session.
 - Use end_session with ended_at when they're done describing the session.
 - Ask follow-up questions to fill in gaps — "how many sets?", "do you remember the weight?" — but accept approximate answers.
-- Don't insist on exact data they can't remember. Partial logs are better than no logs.`
+- Don't insist on exact data they can't remember. Partial logs are better than no logs.
+
+Smart defaults:
+- This is a single-user app. Don't ask for information you can infer.
+- If the user has only one gym, always use it — don't ask which gym.
+- When logging exercises, search for the best match first. Only ask for clarification if genuinely ambiguous.
+- Assume all gym sessions happen at the default gym unless stated otherwise.`
+
+/**
+ * Build a personalised system prompt by loading the user's gym context.
+ * Falls back gracefully if any query fails — the base prompt still works.
+ */
+export async function buildSystemPrompt(supabase: Supabase, userId: string): Promise<string> {
+  const parts = [BASE_PROMPT]
+
+  // Load user's gyms
+  const { data: gyms } = await supabase
+    .from('user_gyms')
+    .select('id, name, location')
+    .eq('user_id', userId)
+    .limit(5)
+
+  if (gyms?.length) {
+    if (gyms.length === 1) {
+      parts.push(`\nUser context:
+- Default gym: "${gyms[0].name}" (ID: ${gyms[0].id})${gyms[0].location ? `, location: ${gyms[0].location}` : ''}
+- Always use this gym for start_session — never ask which gym.`)
+    } else {
+      const gymList = gyms.map(g => `  - "${g.name}" (ID: ${g.id})`).join('\n')
+      parts.push(`\nUser's gyms:\n${gymList}`)
+    }
+  }
+
+  // Load recent session count for context
+  const { count } = await supabase
+    .from('sessions')
+    .select('id', { count: 'exact', head: true })
+    .eq('user_id', userId)
+
+  if (count !== null) {
+    parts.push(`- Total sessions logged: ${count}`)
+  }
+
+  // Load today's date for retrospective session timestamps
+  parts.push(`- Today is ${new Date().toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.`)
+
+  return parts.join('\n')
+}

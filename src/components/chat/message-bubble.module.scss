@@ -23,3 +23,39 @@
   align-self: flex-start;
   border-bottom-left-radius: 0.25rem;
 }
+
+// Markdown styles for assistant messages
+.markdown {
+  p {
+    margin: 0 0 0.5rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  strong {
+    font-weight: 600;
+  }
+
+  ul, ol {
+    margin: 0.25rem 0 0.5rem;
+    padding-left: 1.25rem;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  li {
+    margin-bottom: 0.125rem;
+  }
+
+  code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 0.1rem 0.3rem;
+    border-radius: 0.25rem;
+    font-family: var(--font-geist-mono), monospace;
+    font-size: 0.875em;
+  }
+}
