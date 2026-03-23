@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/supabase/types'
 import { searchExercises, getExerciseHistory } from '@/lib/db/exercises'
 import { getEquipment } from '@/lib/db/equipment'
+import { emitToVault } from '@/lib/vault/emit'
 
 type Supabase = SupabaseClient<Database, 'gym'>
 
@@ -29,6 +30,14 @@ export function createFreeChatTools(supabase: Supabase, userId: string) {
           notes: input.notes ?? null,
         }).select().single()
         if (error) return { error: error.message }
+        emitToVault({
+          type: 'gym_check_in',
+          date: input.check_in_date,
+          soreness: input.soreness_map,
+          energy: input.energy ?? null,
+          notes: input.notes ?? null,
+          tags: ['gym', 'doms', 'recovery', ...Object.keys(input.soreness_map)],
+        }).catch(() => {})
         return { checkInId: data.id, message: 'Check-in recorded' }
       },
     }),

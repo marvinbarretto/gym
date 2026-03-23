@@ -7,6 +7,8 @@ import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from
 import { estimateCost } from '@/lib/ai/cost-tracker'
 import { buildSystemPrompt } from '@/lib/ai/system-prompt'
 import { createConversation, addMessage } from '@/lib/db/conversations'
+import { getSessionDetail } from '@/lib/db/sessions'
+import { emitToVault } from '@/lib/vault/emit'
 
 export async function POST(request: Request) {
   try {
@@ -114,6 +116,36 @@ export async function POST(request: Request) {
               content: null,
               toolCalls: event.toolResults as unknown as Json,
             }).catch(err => console.error('[chat] failed to persist tool results:', err))
+          }
+        }
+        // Emit vault event on session end
+        if (event.toolResults?.length) {
+          for (const tr of event.toolResults) {
+            if (tr.toolName === 'end_session' && 'result' in tr) {
+              const result = tr.result as Record<string, unknown>
+              if (sessionId) {
+                getSessionDetail(supabase, sessionId).then(({ data: detail }) => {
+                  if (!detail) return
+                  const exercises = [...new Set(
+                    (detail.session_sets ?? []).map((s: Record<string, unknown>) =>
+                      (s.exercises as Record<string, string> | null)?.name ?? 'Unknown'
+                    )
+                  )]
+                  const durationMin = detail.ended_at
+                    ? Math.round((new Date(detail.ended_at).getTime() - new Date(detail.started_at).getTime()) / 60000)
+                    : 0
+                  emitToVault({
+                    type: 'gym_session',
+                    date: detail.started_at,
+                    duration_min: durationMin,
+                    exercises: exercises as string[],
+                    total_sets: (detail.session_sets ?? []).length,
+                    summary: `${exercises.length} exercises, ${(detail.session_sets ?? []).length} sets, ${durationMin}min`,
+                    tags: ['gym', 'session'],
+                  }).catch(() => {})
+                }).catch(err => console.error('[vault] session detail fetch failed:', err))
+              }
+            }
           }
         }
       },
