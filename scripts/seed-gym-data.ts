@@ -57,33 +57,66 @@ function parseArgs(): { live: boolean; userId: string | null } {
 // ---------------------------------------------------------------------------
 
 const GYM_DATA = {
-  name: 'My Gym',
+  name: 'Gym Location',
   location: 'Watford',
-  notes: 'Joined March 2026',
+  notes: 'Newest gym in town, joined March 2026, two floors of equipment',
 }
 
-const EQUIPMENT_DATA: Array<{ name: string; type: 'machine' | 'free_weight' | 'cable' | 'bodyweight' | 'cardio' }> = [
-  { name: 'Chest Press Machine',  type: 'machine'     },
-  { name: 'Lat Pulldown',         type: 'cable'       },
-  { name: 'Leg Press',            type: 'machine'     },
-  { name: 'Cable Station',        type: 'cable'       },
-  { name: 'Smith Machine',        type: 'machine'     },
-  { name: 'Dumbbells',            type: 'free_weight' },
-  { name: 'Treadmill',            type: 'cardio'      },
-  { name: 'Stationary Bike',      type: 'cardio'      },
-  { name: 'Rowing Machine',       type: 'cardio'      },
+const EQUIPMENT_DATA: Array<{ name: string; type: 'machine' | 'free_weight' | 'cable' | 'bodyweight' | 'cardio'; description?: string }> = [
+  // Free weights
+  { name: 'Dumbbells',                    type: 'free_weight' },
+  { name: 'Olympic Barbells',             type: 'free_weight' },
+  { name: 'EZ-Curl Bars',                 type: 'free_weight' },
+  { name: 'Flat Benches',                 type: 'free_weight' },
+  { name: 'Adjustable Incline Benches',   type: 'free_weight' },
+  { name: 'Decline Bench',                type: 'free_weight' },
+  { name: 'Squat Rack',                   type: 'free_weight' },
+  // Machines
+  { name: 'Smith Machine',                type: 'machine' },
+  { name: 'Plate-Loaded Leg Press',       type: 'machine' },
+  { name: 'Plate-Loaded Hack Squat',      type: 'machine' },
+  { name: 'Chest Press Machine',          type: 'machine' },
+  { name: 'Shoulder Press Machine',       type: 'machine' },
+  { name: 'Pec Deck / Fly Machine',       type: 'machine' },
+  { name: 'Leg Extension Machine',        type: 'machine' },
+  { name: 'Seated Leg Curl Machine',      type: 'machine' },
+  { name: 'Standing Leg Curl Machine',    type: 'machine' },
+  { name: 'Hip Abductor / Adductor',      type: 'machine' },
+  { name: 'Standing Calf Raise Machine',  type: 'machine' },
+  { name: 'Tricep Extension Machine',     type: 'machine' },
+  { name: 'Assisted Pull-Up / Dip Machine', type: 'machine' },
+  { name: 'Ab Crunch Machine',            type: 'machine' },
+  // Cable
+  { name: 'Dual Adjustable Pulleys',      type: 'cable' },
+  { name: 'Seated Cable Row Machine',     type: 'cable' },
+  { name: 'Lat Pulldown',                 type: 'cable' },
+  // Cardio
+  { name: 'Treadmills',                   type: 'cardio' },
+  { name: 'Stationary Bikes',             type: 'cardio' },
+  { name: 'Rowing Machines',              type: 'cardio' },
+  { name: 'Stairmaster',                  type: 'cardio' },
+  { name: 'Elliptical / Cross Trainer',   type: 'cardio' },
+  // Bodyweight
+  { name: 'Pull-Up Bar',                  type: 'bodyweight' },
+  { name: 'Dip Station',                  type: 'bodyweight' },
+  { name: 'Roman Chair / Hyperextension', type: 'bodyweight' },
 ]
 
 const SUPPLEMENTS_DATA: Array<{ name: string; type: 'protein' | 'creatine' | 'vitamin' | 'other'; dosage_unit: string }> = [
-  { name: 'Whey Protein',          type: 'protein',   dosage_unit: 'scoop' },
-  { name: 'Creatine Monohydrate',  type: 'creatine',  dosage_unit: 'g'     },
+  { name: 'Vitamin D3 (Holland & Barrett, 25μg)', type: 'vitamin',  dosage_unit: 'tablet' },
+  { name: 'Centrum Advance 50+ Multivitamin',     type: 'vitamin',  dosage_unit: 'tablet' },
+  { name: 'Creatine Monohydrate (Bulk)',           type: 'creatine', dosage_unit: 'g'      },
+  { name: 'Magnesium (375μg)',                     type: 'vitamin',  dosage_unit: 'tablet' },
+  { name: 'ZMA',                                   type: 'other',    dosage_unit: 'tablet' },
 ]
 
+// Flat strings for now — matches ModelConfig type in src/lib/ai/model-router.ts.
+// Fallback routing (primary/fallback per tier) is a Phase 2 feature.
 const MODEL_CONFIG = {
-  in_session:    'claude-haiku-4-5',
-  post_session:  'claude-sonnet-4-6',
-  deep_analysis: 'claude-opus',
-  fallback:      'gemini-2.5-flash',
+  in_session:    'anthropic/claude-haiku-4.5',
+  post_session:  'anthropic/claude-sonnet-4.6',
+  deep_analysis: 'opus-local',
+  fallback:      'openrouter/google/gemini-2.5-flash-lite',
 }
 
 // ---------------------------------------------------------------------------
@@ -155,8 +188,8 @@ async function main() {
   }
 
   console.log('\n--- Model Config ---')
-  for (const [role, model] of Object.entries(MODEL_CONFIG)) {
-    console.log(`  ${role.padEnd(16)} ${model}`)
+  for (const [role, modelId] of Object.entries(MODEL_CONFIG)) {
+    console.log(`  ${role.padEnd(16)} ${modelId}`)
   }
 
   if (!live) {
