@@ -9,12 +9,25 @@ export function useModelConfig() {
 
   useEffect(() => {
     fetch('/api/settings')
-      .then((res) => res.json())
+      .then((res) => {
+        if (res.status === 401) {
+          console.warn('[use-model-config] Not authenticated — using default config')
+          return null
+        }
+        if (!res.ok) {
+          console.error(`[use-model-config] Failed to load settings: ${res.status} ${res.statusText}`)
+          return null
+        }
+        return res.json()
+      })
       .then((data) => {
-        setConfig(data)
+        if (data) setConfig(data)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((err) => {
+        console.error('[use-model-config] Network error loading settings:', err)
+        setLoading(false)
+      })
   }, [])
 
   return { config, loading }

@@ -55,6 +55,14 @@ export function useSessionSets(sessionId: string | null) {
     setLoading(true)
     try {
       const res = await fetch(`/api/sessions/${sessionId}`)
+      if (res.status === 401) {
+        console.warn('[use-session-sets] Not authenticated — cannot load sets')
+        return
+      }
+      if (!res.ok) {
+        console.error(`[use-session-sets] Failed to load session sets: ${res.status} ${res.statusText}`)
+        return
+      }
       const data = await res.json()
       setSets(data?.session_sets ?? [])
     } finally {
