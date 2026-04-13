@@ -1,5 +1,6 @@
 // Approximate costs per 1M tokens — update as prices change
 const COST_PER_MILLION: Record<string, { input: number; output: number }> = {
+  'openrouter/google/gemma-4-26b-a4b-it:free': { input: 0, output: 0 },
   'anthropic/claude-haiku-4.5': { input: 0.25, output: 1.25 },
   'anthropic/claude-sonnet-4.6': { input: 3, output: 15 },
   'google/gemini-2.5-flash': { input: 0.15, output: 0.6 },
