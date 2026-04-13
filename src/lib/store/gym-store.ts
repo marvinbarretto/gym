@@ -100,13 +100,20 @@ export function createGymStore() {
   }))
 }
 
-// Singleton store for the app
-const store = createGymStore()
+// Singleton store — lazy-initialized to avoid SSR hydration mismatch
+let store: ReturnType<typeof createGymStore> | null = null
+
+function getStore() {
+  if (!store) store = createGymStore()
+  return store
+}
 
 // React hook — use this in components
 export function useGymStore<T>(selector: (state: GymState) => T): T {
-  return useStore(store, selector)
+  return useStore(getStore(), selector)
 }
 
 // Direct access for non-React code
-export const gymStore = store
+export function getGymStore() {
+  return getStore()
+}
