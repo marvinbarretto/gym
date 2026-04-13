@@ -24,6 +24,15 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogle() {
+    setError(null)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (error) setError(error.message)
+  }
+
   if (sent) {
     return (
       <div className={styles.container}>
@@ -35,6 +44,8 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Gym</h1>
+      <button onClick={handleGoogle} className={styles.button}>Sign in with Google</button>
+      <div className={styles.divider}>or</div>
       <form onSubmit={handleLogin} className={styles.form}>
         <input
           type="email"
@@ -44,7 +55,7 @@ export default function LoginPage() {
           onChange={(e) => setEmail(e.target.value)}
           required
         />
-        <button type="submit" className={styles.button}>Sign in</button>
+        <button type="submit" className={styles.button}>Sign in with email</button>
         {error && <p className={styles.error}>{error}</p>}
       </form>
     </div>
