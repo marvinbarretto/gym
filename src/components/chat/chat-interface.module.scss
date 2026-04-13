@@ -37,6 +37,17 @@
   }
 }
 
+.modelTag {
+  align-self: center;
+  font-size: 0.75rem;
+  color: var(--color-muted, #999);
+  background: var(--color-surface, #1a1a1a);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  margin-top: 0.5rem;
+}
+
 .empty {
   flex: 1;
   display: flex;

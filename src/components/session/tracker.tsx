@@ -43,6 +43,7 @@ export function Tracker({ session, groups, totalSets, onEndSession, onRefetch }:
             {new Date(session.started_at).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
           </span>
           <span className={styles.elapsed}>{elapsed}min</span>
+          <span className={styles.sessionId}>{session.id.slice(0, 8)}</span>
         </div>
         <div className={styles.headerRight}>
           <button className={styles.collapse} onClick={() => setExpanded(false)}>collapse</button>

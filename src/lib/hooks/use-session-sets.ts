@@ -64,7 +64,12 @@ export function useSessionSets(sessionId: string | null) {
         return
       }
       const data = await res.json()
-      setSets(data?.session_sets ?? [])
+      const session = data?.session ?? data
+      console.log('[use-session-sets] loaded:', {
+        session_sets: (session?.session_sets ?? []).length,
+        session_cardio: (session?.session_cardio ?? []).length,
+      })
+      setSets(session?.session_sets ?? [])
     } finally {
       setLoading(false)
     }

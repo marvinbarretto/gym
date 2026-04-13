@@ -37,24 +37,42 @@ function formatToolToast(toolName: string, output: unknown): string {
   return labels[toolName] ?? `${toolName} complete`
 }
 
+// Show just the short model name, e.g. "gemma-4-26b" from "openrouter/google/gemma-4-26b-a4b-it:free"
+function shortModelName(modelId: string): string {
+  const name = modelId.split('/').pop() ?? modelId
+  return name.replace(/:free$/, '').replace(/-it$/, '').replace(/-preview$/, '')
+}
+
 export function ChatInterface({ session, isInSession, onStartSession, onEndSession }: ChatInterfaceProps) {
   const [conversationId, setConversationId] = useState<string | null>(null)
+  const [activeModel, setActiveModel] = useState<string | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const toastedRef = useRef(new Set<string>())
 
-  const transport = useMemo(() => new DefaultChatTransport({
-    api: '/api/chat',
-    body: {
-      sessionId: session?.id ?? null,
-      conversationId,
-    },
-    fetch: async (input, init) => {
-      const response = await fetch(input, init)
-      const convId = response.headers.get('X-Conversation-Id')
-      if (convId) setConversationId(convId)
-      return response
-    },
-  }), [session?.id, conversationId])
+  // Reset conversation when session changes (new session = new conversation)
+  useEffect(() => {
+    console.log('[chat-interface] session changed:', session?.id ?? 'NONE')
+    setConversationId(null)
+  }, [session?.id])
+
+  const transport = useMemo(() => {
+    console.log('[chat-interface] transport created — sessionId:', session?.id ?? 'NONE', '| convId:', conversationId ?? 'NEW')
+    return new DefaultChatTransport({
+      api: '/api/chat',
+      body: {
+        sessionId: session?.id ?? null,
+        conversationId,
+      },
+      fetch: async (input, init) => {
+        const response = await fetch(input, init)
+        const convId = response.headers.get('X-Conversation-Id')
+        if (convId) setConversationId(convId)
+        const model = response.headers.get('X-Model-Id')
+        if (model) setActiveModel(model)
+        return response
+      },
+    })
+  }, [session?.id, conversationId])
 
   const { messages, status, sendMessage } = useChat({ transport })
   const { groups, sets, refetch } = useSessionSets(isInSession ? session?.id ?? null : null)
@@ -110,6 +128,9 @@ export function ChatInterface({ session, isInSession, onStartSession, onEndSessi
         />
       )}
       <div className={styles.messages} ref={scrollRef}>
+        {activeModel && (
+          <div className={styles.modelTag}>{shortModelName(activeModel)}</div>
+        )}
         {messages.length === 0 && (
           <div className={styles.empty}>
             <p>{isInSession ? 'Session started. Tell me what you\'re working on.' : 'Ready when you are. Tell me about your workout.'}</p>
