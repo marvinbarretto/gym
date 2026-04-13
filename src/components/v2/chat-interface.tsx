@@ -17,7 +17,7 @@ export function V2ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const transport = useMemo(() => new DefaultChatTransport({
-    api: '/api/v2/chat',
+    api: '/api/chat',
     fetch: async (input, init) => {
       const response = await fetch(input, init)
       const model = response.headers.get('X-Model-Id')
@@ -49,7 +49,7 @@ export function V2ChatInterface() {
 
     // Send to parse endpoint
     try {
-      const res = await fetch('/api/v2/parse', {
+      const res = await fetch('/api/parse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId: session.id, entries }),
