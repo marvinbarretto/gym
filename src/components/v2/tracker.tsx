@@ -1,14 +1,30 @@
 'use client'
 
-import { useState } from 'react'
-import { useGymStore } from '@/lib/store/gym-store'
+import { useState, useMemo } from 'react'
+import { useGymStore, type SessionSet, type ExerciseGroup } from '@/lib/store/gym-store'
 import styles from './tracker.module.scss'
+
+function groupSets(sets: SessionSet[]): ExerciseGroup[] {
+  const groups: ExerciseGroup[] = []
+  const seen = new Map<string, ExerciseGroup>()
+  const order: string[] = []
+  for (const s of sets) {
+    if (!seen.has(s.exercise_id)) {
+      const group: ExerciseGroup = { exerciseId: s.exercise_id, exerciseName: s.exercise_name, sets: [] }
+      seen.set(s.exercise_id, group)
+      order.push(s.exercise_id)
+    }
+    seen.get(s.exercise_id)!.sets.push(s)
+  }
+  for (const key of order) groups.push(seen.get(key)!)
+  return groups
+}
 
 export function V2Tracker() {
   const session = useGymStore(s => s.session)
-  const groups = useGymStore(s => s.exerciseGroups())
-  const cardio = useGymStore(s => s.cardio)
   const sets = useGymStore(s => s.sets)
+  const cardio = useGymStore(s => s.cardio)
+  const groups = useMemo(() => groupSets(sets), [sets])
   const [expanded, setExpanded] = useState(true)
 
   if (!session) return null
