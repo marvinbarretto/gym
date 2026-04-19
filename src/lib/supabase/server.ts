@@ -27,3 +27,6 @@ export async function createServerSupabaseClient() {
     }
   )
 }
+
+// Alias for compatibility with route handlers that import { createClient }
+export const createClient = createServerSupabaseClient
