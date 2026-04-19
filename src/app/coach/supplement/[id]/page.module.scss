@@ -1,0 +1,32 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.back {
+  display: inline-block;
+  color: var(--muted, #666);
+  text-decoration: none;
+  margin-bottom: 1rem;
+}
+
+.tagline {
+  color: var(--muted, #666);
+  font-size: 1.05rem;
+  margin: 0.25rem 0 1.5rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 1rem 0 2rem;
+  dt { font-weight: 600; }
+  dd { margin: 0; }
+}
+
+.body {
+  line-height: 1.6;
+  h2, h3 { margin-top: 1.5rem; }
+}
