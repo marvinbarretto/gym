@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { NextRequest } from 'next/server';
 
 vi.stubEnv('JIMBO_API_URL', 'https://jimbo.test');
 vi.stubEnv('JIMBO_API_KEY', 'secret');
@@ -19,7 +20,7 @@ function req(method: string, url: string, body?: unknown) {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
-  });
+  }) as unknown as NextRequest;
 }
 
 describe('coach proxy route', () => {
