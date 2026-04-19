@@ -102,14 +102,6 @@ const EQUIPMENT_DATA: Array<{ name: string; type: 'machine' | 'free_weight' | 'c
   { name: 'Roman Chair / Hyperextension', type: 'bodyweight' },
 ]
 
-const SUPPLEMENTS_DATA: Array<{ name: string; type: 'protein' | 'creatine' | 'vitamin' | 'other'; dosage_unit: string }> = [
-  { name: 'Vitamin D3 (Holland & Barrett, 25μg)', type: 'vitamin',  dosage_unit: 'tablet' },
-  { name: 'Centrum Advance 50+ Multivitamin',     type: 'vitamin',  dosage_unit: 'tablet' },
-  { name: 'Creatine Monohydrate (Bulk)',           type: 'creatine', dosage_unit: 'g'      },
-  { name: 'Magnesium (375μg)',                     type: 'vitamin',  dosage_unit: 'tablet' },
-  { name: 'ZMA',                                   type: 'other',    dosage_unit: 'tablet' },
-]
-
 // Flat strings for now — matches ModelConfig type in src/lib/ai/model-router.ts.
 // Fallback routing (primary/fallback per tier) is a Phase 2 feature.
 const MODEL_CONFIG = {
@@ -182,11 +174,6 @@ async function main() {
     console.log(`  [${eq.type.padEnd(12)}]  ${eq.name}`)
   }
 
-  console.log('\n--- Supplements ---')
-  for (const s of SUPPLEMENTS_DATA) {
-    console.log(`  [${s.type.padEnd(10)}]  ${s.name}  (unit: ${s.dosage_unit})`)
-  }
-
   console.log('\n--- Model Config ---')
   for (const [role, modelId] of Object.entries(MODEL_CONFIG)) {
     console.log(`  ${role.padEnd(16)} ${modelId}`)
@@ -236,23 +223,7 @@ async function main() {
     console.log(`     ${eq.id}  ${eq.name}`)
   }
 
-  // 3. Insert supplements
-  const supplementRows = SUPPLEMENTS_DATA.map(s => ({ user_id: userId!, ...s }))
-  const { data: suppData, error: suppErr } = await supabase
-    .from('supplements')
-    .insert(supplementRows)
-    .select('id, name')
-
-  if (suppErr) {
-    console.error('ERROR inserting supplements:', suppErr.message)
-    process.exit(1)
-  }
-  console.log(`[ok] supplements created: ${suppData.length} items`)
-  for (const s of suppData) {
-    console.log(`     ${s.id}  ${s.name}`)
-  }
-
-  // 4. Upsert model config (safe to re-run; one row per user)
+  // 3. Upsert model config (safe to re-run; one row per user)
   const { data: configData, error: configErr } = await supabase
     .from('model_config')
     .upsert({ user_id: userId!, config: MODEL_CONFIG }, { onConflict: 'user_id' })

@@ -1,6 +1,6 @@
 # Gym Seed Data Interview
 
-Paste this prompt into a fresh Claude session. It will interview you about your gym, equipment, and supplements, then output the exact TypeScript constants to paste into `scripts/seed-gym-data.ts`.
+Paste this prompt into a fresh Claude session. It will interview you about your gym and equipment, then output the exact TypeScript constants to paste into `scripts/seed-gym-data.ts`.
 
 ---
 
@@ -12,8 +12,7 @@ You are helping me populate seed data for my gym tracking app. Interview me to e
 
 1. **My gym** — name, location, any notes
 2. **Equipment at my gym** — every machine, rack, bench, cable station, cardio machine I can remember. For each one, classify as: `machine`, `free_weight`, `cable`, `bodyweight`, or `cardio`
-3. **Supplements I have at home** — name, type (`protein`, `creatine`, `vitamin`, `other`), and dosage unit (e.g. `scoop`, `g`, `mg`, `ml`)
-4. **My preferred AI models** — which models I want for: in-session (fast, cheap), post-session (moderate), deep analysis (heavy reasoning), and fallback. Format as `provider/model-name` where provider is `anthropic`, `openrouter`, or plain string for AI Gateway.
+3. **My preferred AI models** — which models I want for: in-session (fast, cheap), post-session (moderate), deep analysis (heavy reasoning), and fallback. Format as `provider/model-name` where provider is `anthropic`, `openrouter`, or plain string for AI Gateway.
 
 **Interview style:**
 - Ask me one topic at a time
@@ -35,11 +34,6 @@ const GYM_DATA = {
 
 const EQUIPMENT_DATA: Array<{ name: string; type: 'machine' | 'free_weight' | 'cable' | 'bodyweight' | 'cardio'; description?: string }> = [
   { name: '...', type: '...', description: '...' },
-  // ...
-]
-
-const SUPPLEMENTS_DATA: Array<{ name: string; type: 'protein' | 'creatine' | 'vitamin' | 'other'; dosage_unit: string }> = [
-  { name: '...', type: '...', dosage_unit: '...' },
   // ...
 ]
 
