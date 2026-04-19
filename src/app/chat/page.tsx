@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { V2ChatInterface } from '@/components/v2/chat-interface'
 import { V2Tracker } from '@/components/v2/tracker'
 import { useGymStore, type SessionSet, type SessionCardio } from '@/lib/store/gym-store'
+import { notifyCoachSessionEnd } from '@/lib/coach/session-end'
 import styles from './page.module.scss'
 
 export default function V2Page() {
@@ -67,6 +68,7 @@ export default function V2Page() {
     })
     clearSession()
     console.log('[v2] session ended')
+    await notifyCoachSessionEnd({ sessionId: session.id, endedAt: new Date().toISOString() })
   }, [session, clearSession])
 
   const handleResume = useCallback(() => {
@@ -83,6 +85,7 @@ export default function V2Page() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'end', sessionId: pendingSession.id }),
       })
+      await notifyCoachSessionEnd({ sessionId: pendingSession.id, endedAt: new Date().toISOString() })
     }
     setShowResume(false)
     setPendingSession(null)
