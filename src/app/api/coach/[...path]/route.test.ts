@@ -1,36 +1,30 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { NextRequest } from 'next/server';
-
-vi.stubEnv('JIMBO_API_URL', 'https://jimbo.test');
-vi.stubEnv('JIMBO_API_KEY', 'secret');
-
-const fetchMock = vi.fn();
-globalThis.fetch = fetchMock as unknown as typeof fetch;
-
-vi.mock('@/lib/supabase/server', () => ({
-  createClient: async () => ({
-    auth: { getUser: async () => ({ data: { user: { id: 'user-1' } }, error: null }) },
-  }),
-}));
-
-const { GET, POST } = await import('./route');
+import { handleProxy, type ProxyDeps } from './route';
 
 function req(method: string, url: string, body?: unknown) {
   return new Request(url, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
-  }) as unknown as NextRequest;
+  });
 }
 
 describe('coach proxy route', () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+  let deps: ProxyDeps;
+
   beforeEach(() => {
-    fetchMock.mockReset();
+    fetchMock = vi.fn();
+    deps = {
+      getUser: async () => ({ id: 'user-1' }),
+      fetch: fetchMock as unknown as typeof fetch,
+      env: { JIMBO_API_URL: 'https://jimbo.test', JIMBO_API_KEY: 'secret' },
+    };
   });
 
   it('forwards GET /api/coach/today with X-API-Key attached', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ pending: [] }), { status: 200 }));
-    const res = await GET(req('GET', 'http://local/api/coach/today'), { params: Promise.resolve({ path: ['today'] }) });
+    const res = await handleProxy(req('GET', 'http://local/api/coach/today'), ['today'], deps);
     expect(res.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledOnce();
     const call = fetchMock.mock.calls[0];
@@ -40,20 +34,52 @@ describe('coach proxy route', () => {
 
   it('forwards POST /api/coach/log with body', async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ log_id: 1, remaining_amount: 500 }), { status: 201 }));
-    const res = await POST(req('POST', 'http://local/api/coach/log', { supplement_id: 'supp_x', dosage: 5, source: 'in_app' }), { params: Promise.resolve({ path: ['log'] }) });
+    const res = await handleProxy(
+      req('POST', 'http://local/api/coach/log', { supplement_id: 'supp_x', dosage: 5, source: 'in_app' }),
+      ['log'],
+      deps,
+    );
     expect(res.status).toBe(201);
     const init = fetchMock.mock.calls[0][1] as RequestInit;
     expect(init.method).toBe('POST');
     expect(init.body).toContain('supp_x');
   });
 
+  it('forwards GET /api/coach/supplement/:id', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: 'supp_x' }), { status: 200 }));
+    const res = await handleProxy(req('GET', 'http://local/api/coach/supplement/supp_x'), ['supplement', 'supp_x'], deps);
+    expect(res.status).toBe(200);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://jimbo.test/api/coach/supplement/supp_x');
+  });
+
   it('returns 401 when there is no authenticated user', async () => {
-    vi.doMock('@/lib/supabase/server', () => ({
-      createClient: async () => ({ auth: { getUser: async () => ({ data: { user: null }, error: null }) } }),
-    }));
-    vi.resetModules();
-    const { GET: GetFresh } = await import('./route');
-    const res = await GetFresh(req('GET', 'http://local/api/coach/today'), { params: Promise.resolve({ path: ['today'] }) });
+    const unauth = { ...deps, getUser: async () => null };
+    const res = await handleProxy(req('GET', 'http://local/api/coach/today'), ['today'], unauth);
     expect(res.status).toBe(401);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 for non-allowlisted admin endpoints (tick)', async () => {
+    const res = await handleProxy(req('POST', 'http://local/api/coach/tick'), ['tick'], deps);
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 for non-allowlisted inventory endpoint', async () => {
+    const res = await handleProxy(req('GET', 'http://local/api/coach/inventory'), ['inventory'], deps);
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 404 for wrong method on allowlisted path', async () => {
+    const res = await handleProxy(req('GET', 'http://local/api/coach/log'), ['log'], deps);
+    expect(res.status).toBe(404);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns 500 when jimbo env is not configured', async () => {
+    const missing = { ...deps, env: {} };
+    const res = await handleProxy(req('GET', 'http://local/api/coach/today'), ['today'], missing);
+    expect(res.status).toBe(500);
   });
 });

@@ -8,7 +8,7 @@ export async function notifyCoachSessionEnd(opts: { sessionId: string; endedAt: 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ session_id: opts.sessionId, ended_at: opts.endedAt }),
     })
-  } catch {
-    // ignore
+  } catch (err) {
+    console.warn('[coach] session-end notify failed:', err)
   }
 }
