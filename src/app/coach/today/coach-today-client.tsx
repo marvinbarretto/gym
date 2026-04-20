@@ -89,21 +89,21 @@ function Section({ title, nudges, onTaken, onSkip, onLater, readOnly }: {
 }) {
   if (nudges.length === 0) return null
   return (
-    <section style={{ marginBottom: '2rem' }}>
+    <section className={styles.section}>
       <h2>{title}</h2>
       {nudges.map(n => (
-        <article key={n.nudge_key} id={`nudge=${n.nudge_key}`} style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: 8, margin: '0.75rem 0' }}>
-          <h3 style={{ margin: 0 }}>{ANCHOR_LABELS[n.anchor] ?? n.anchor}</h3>
+        <article key={n.nudge_key} id={`nudge=${n.nudge_key}`} className={styles.nudge}>
+          <h3 className={styles.nudgeTitle}>{ANCHOR_LABELS[n.anchor] ?? n.anchor}</h3>
           <ul>
             {n.supplements.map(s => (
               <li key={s.supplement_id}>
                 <a href={`/coach/supplement/${s.supplement_id}`}><strong>{s.name}</strong></a> — {s.dose_amount}{s.dose_unit}
-                <div style={{ color: '#555', fontSize: '0.9em' }}>{s.rationale_short}</div>
+                <div className={styles.rationale}>{s.rationale_short}</div>
               </li>
             ))}
           </ul>
           {!readOnly && (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+            <div className={styles.actions}>
               <button onClick={() => onTaken?.(n)}>Taken ✓</button>
               <button onClick={() => onLater?.(n)}>Later (+2h)</button>
               <button onClick={() => onSkip?.(n)}>Skip</button>
