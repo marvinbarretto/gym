@@ -2,7 +2,6 @@
 // Proxy to jimbo-api. Attaches X-API-Key server-side so it never leaks to browser.
 // Allowlisted paths only — admin endpoints (tick, inventory) are not exposed through the PWA.
 import { NextRequest } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 
 type Params = { params: Promise<{ path: string[] }> }
 
@@ -22,7 +21,6 @@ function isAllowed(method: string, path: string[]): boolean {
 }
 
 export interface ProxyDeps {
-  getUser: () => Promise<{ id: string } | null>
   fetch: typeof fetch
   env: { JIMBO_API_URL?: string; JIMBO_API_KEY?: string }
 }
@@ -30,11 +28,6 @@ export interface ProxyDeps {
 export async function handleProxy(req: Request, path: string[], deps: ProxyDeps): Promise<Response> {
   if (!isAllowed(req.method, path)) {
     return new Response(JSON.stringify({ error: 'not_found' }), { status: 404 })
-  }
-
-  const user = await deps.getUser()
-  if (!user) {
-    return new Response(JSON.stringify({ error: 'unauthenticated' }), { status: 401 })
   }
 
   const { JIMBO_API_URL: base, JIMBO_API_KEY: key } = deps.env
@@ -62,13 +55,8 @@ export async function handleProxy(req: Request, path: string[], deps: ProxyDeps)
   })
 }
 
-async function defaultDeps(): Promise<ProxyDeps> {
-  const supabase = await createClient()
+function defaultDeps(): ProxyDeps {
   return {
-    getUser: async () => {
-      const { data } = await supabase.auth.getUser()
-      return data.user ? { id: data.user.id } : null
-    },
     fetch,
     env: {
       JIMBO_API_URL: process.env.JIMBO_API_URL,
@@ -79,7 +67,7 @@ async function defaultDeps(): Promise<ProxyDeps> {
 
 async function proxy(req: Request, params: Params['params']): Promise<Response> {
   const { path } = await params
-  return handleProxy(req, path, await defaultDeps())
+  return handleProxy(req, path, defaultDeps())
 }
 
 export async function GET(req: NextRequest, ctx: Params) { return proxy(req, ctx.params) }

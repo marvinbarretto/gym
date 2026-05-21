@@ -1,6 +1,5 @@
 'use client'
 
-import { useUser } from '@/lib/hooks/use-user'
 import { useModelConfig } from '@/lib/hooks/use-model-config'
 import styles from './status-bar.module.scss'
 
@@ -17,7 +16,6 @@ function formatModel(modelId: string): string {
 }
 
 export function StatusBar() {
-  const { user } = useUser()
   const { config, loading: configLoading } = useModelConfig()
 
   const modelDisplay = configLoading ? '…' : formatModel(config.in_session)
@@ -27,11 +25,6 @@ export function StatusBar() {
       <span className={styles.model} title={config.in_session}>
         {modelDisplay}
       </span>
-      {user && (
-        <span className={styles.user}>
-          {user.email}
-        </span>
-      )}
     </div>
   )
 }

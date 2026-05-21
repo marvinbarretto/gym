@@ -16,7 +16,6 @@ describe('coach proxy route', () => {
   beforeEach(() => {
     fetchMock = vi.fn();
     deps = {
-      getUser: async () => ({ id: 'user-1' }),
       fetch: fetchMock as unknown as typeof fetch,
       env: { JIMBO_API_URL: 'https://jimbo.test', JIMBO_API_KEY: 'secret' },
     };
@@ -50,13 +49,6 @@ describe('coach proxy route', () => {
     const res = await handleProxy(req('GET', 'http://local/api/coach/supplement/supp_x'), ['supplement', 'supp_x'], deps);
     expect(res.status).toBe(200);
     expect(fetchMock.mock.calls[0][0]).toBe('https://jimbo.test/api/coach/supplement/supp_x');
-  });
-
-  it('returns 401 when there is no authenticated user', async () => {
-    const unauth = { ...deps, getUser: async () => null };
-    const res = await handleProxy(req('GET', 'http://local/api/coach/today'), ['today'], unauth);
-    expect(res.status).toBe(401);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('returns 404 for non-allowlisted admin endpoints (tick)', async () => {

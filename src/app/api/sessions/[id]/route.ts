@@ -1,17 +1,17 @@
 import { NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { getSessionDetail } from '@/lib/db/sessions'
+import { sessions } from '@/lib/api/jimbo-client'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return new Response('Unauthorized', { status: 401 })
-
-  const { data, error } = await getSessionDetail(supabase, id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ session: data })
+  try {
+    const session = await sessions.detail(id)
+    return NextResponse.json({ session })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'unknown'
+    const status = /\b404\b/.test(msg) ? 404 : 500
+    return NextResponse.json({ error: msg }, { status })
+  }
 }

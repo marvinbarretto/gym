@@ -1,28 +1,17 @@
 import { streamText, convertToModelMessages, type UIMessage } from 'ai'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG, type ModelConfig } from '@/lib/ai/model-router'
+import { getModelId, resolveModel, DEFAULT_MODEL_CONFIG } from '@/lib/ai/model-router'
 import { buildSystemPromptV2 } from '@/lib/ai/system-prompt-v2'
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) return new Response('Unauthorized', { status: 401 })
-
     const { messages }: { messages: UIMessage[] } = await request.json()
-    console.log('[v2/chat] user:', user.email, '| messages:', messages.length)
+    console.log('[v2/chat] messages:', messages.length)
 
-    const { data: configRow } = await supabase
-      .from('model_config')
-      .select('config')
-      .eq('user_id', user.id)
-      .single()
-
-    const modelConfig: ModelConfig = (configRow?.config as unknown as ModelConfig) ?? DEFAULT_MODEL_CONFIG
-    const modelId = getModelId('in_session', modelConfig)
+    // Model config used to be per-user in Supabase. Solo system now — defaults.
+    const modelId = getModelId('in_session', DEFAULT_MODEL_CONFIG)
     console.log('[v2/chat] model:', modelId)
 
-    const systemPrompt = await buildSystemPromptV2(supabase)
+    const systemPrompt = await buildSystemPromptV2()
 
     const result = streamText({
       model: resolveModel(modelId),

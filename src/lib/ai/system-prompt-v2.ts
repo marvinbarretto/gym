@@ -1,7 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/lib/supabase/types'
-
-type Supabase = SupabaseClient<Database, 'gym'>
+import { exercises as exercisesApi } from '@/lib/api/jimbo-client'
 
 const BASE_PROMPT = `You are a gym session parser. The user describes exercises they did in natural language. Your job is to extract structured data and return JSON.
 
@@ -46,17 +43,13 @@ RULES:
 - Accept approximate/partial info — partial logs are better than no logs
 - Never ask the user for information you can reasonably infer`
 
-export async function buildSystemPromptV2(supabase: Supabase): Promise<string> {
+export async function buildSystemPromptV2(): Promise<string> {
   const parts = [BASE_PROMPT]
 
-  const { data: exercises } = await supabase
-    .from('exercises')
-    .select('name, equipment_type')
-    .order('name')
-    .limit(200)
+  const exercises = await exercisesApi.search({ limit: 200 })
 
-  if (exercises?.length) {
-    const list = exercises.map(e => `- ${e.name}${e.equipment_type ? ` (${e.equipment_type})` : ''}`).join('\n')
+  if (exercises.length) {
+    const list = exercises.map((e) => `- ${e.name}${e.equipment_type ? ` (${e.equipment_type})` : ''}`).join('\n')
     parts.push(`\nKNOWN EXERCISES:\n${list}`)
   }
 

@@ -1,25 +1,19 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { getRecentSessions } from '@/lib/db/sessions'
+import { sessions } from '@/lib/api/jimbo-client'
 import { SessionCard } from '@/components/sessions/session-card'
-import { redirect } from 'next/navigation'
 import styles from './page.module.scss'
 
 export default async function SessionsPage() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
-  if (!user) redirect('/login')
-
-  const { data: sessions } = await getRecentSessions(supabase, user.id, 20)
+  const list = await sessions.list({ limit: 20 })
 
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Sessions</h1>
       <div className={styles.list}>
-        {sessions && sessions.length > 0 ? (
-          // SessionCard expects a session object with nested session_sets
-          sessions.map((session) => (
-            <SessionCard key={session.id} session={session as any} />
+        {list.length > 0 ? (
+          // SessionCard's set/exercise summary is best-effort — list view
+          // shows date + duration only. Detail page has the full set table.
+          list.map((session) => (
+            <SessionCard key={session.id} session={session} />
           ))
         ) : (
           <p className={styles.empty}>No sessions yet. Start one from the chat.</p>
