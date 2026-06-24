@@ -1,6 +1,8 @@
 // src/app/api/coach/[...path]/route.ts
 // Proxy to jimbo-api. Attaches X-API-Key server-side so it never leaks to browser.
-// Allowlisted paths only — admin endpoints (tick, inventory) are not exposed through the PWA.
+// Allowlisted paths only — read-only views (today, protocol, inventory, supplement-log,
+// supplement/:id) plus the log/skip/later/session-end actions. Admin endpoints (tick)
+// stay unexposed.
 import { NextRequest } from 'next/server'
 
 type Params = { params: Promise<{ path: string[] }> }
@@ -14,6 +16,10 @@ const ALLOWLIST: AllowedRoute[] = [
   { method: 'POST', match: (p) => p.length === 1 && p[0] === 'later' },
   { method: 'POST', match: (p) => p.length === 1 && p[0] === 'session-end' },
   { method: 'GET', match: (p) => p.length === 2 && p[0] === 'supplement' },
+  // Read-only views for the /coach/today overview: protocol, inventory, history.
+  { method: 'GET', match: (p) => p.length === 1 && p[0] === 'protocol' },
+  { method: 'GET', match: (p) => p.length === 1 && p[0] === 'inventory' },
+  { method: 'GET', match: (p) => p.length === 1 && p[0] === 'supplement-log' },
 ]
 
 function isAllowed(method: string, path: string[]): boolean {

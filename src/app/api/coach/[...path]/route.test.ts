@@ -57,8 +57,17 @@ describe('coach proxy route', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('returns 404 for non-allowlisted inventory endpoint', async () => {
-    const res = await handleProxy(req('GET', 'http://local/api/coach/inventory'), ['inventory'], deps);
+  it('forwards GET read-only overview endpoints (protocol, inventory, supplement-log)', async () => {
+    for (const path of ['protocol', 'inventory', 'supplement-log']) {
+      fetchMock.mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 }));
+      const res = await handleProxy(req('GET', `http://local/api/coach/${path}`), [path], deps);
+      expect(res.status).toBe(200);
+      expect(fetchMock.mock.calls.at(-1)?.[0]).toBe(`https://jimbo.test/api/coach/${path}`);
+    }
+  });
+
+  it('returns 404 for wrong method on a read-only endpoint (POST inventory)', async () => {
+    const res = await handleProxy(req('POST', 'http://local/api/coach/inventory'), ['inventory'], deps);
     expect(res.status).toBe(404);
     expect(fetchMock).not.toHaveBeenCalled();
   });
