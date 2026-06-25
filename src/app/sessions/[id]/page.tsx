@@ -3,6 +3,9 @@ import { SetTable } from '@/components/sessions/set-table'
 import { redirect } from 'next/navigation'
 import styles from './page.module.scss'
 
+// Fetches from jimbo-api at render — keep it out of build-time prerender.
+export const dynamic = 'force-dynamic'
+
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   let session

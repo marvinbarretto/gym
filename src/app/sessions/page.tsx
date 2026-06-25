@@ -2,6 +2,10 @@ import { sessions } from '@/lib/api/jimbo-client'
 import { SessionCard } from '@/components/sessions/session-card'
 import styles from './page.module.scss'
 
+// Fetches from jimbo-api at render — must not be prerendered at build time
+// (build env has no JIMBO_API_* creds, and the data is per-request anyway).
+export const dynamic = 'force-dynamic'
+
 export default async function SessionsPage() {
   const list = await sessions.list({ limit: 20 })
 
