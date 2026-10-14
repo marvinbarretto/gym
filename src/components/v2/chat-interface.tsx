@@ -7,6 +7,7 @@ import { MessageBubble } from '@/components/chat/message-bubble'
 import { ChatInput } from '@/components/chat/chat-input'
 import { useGymStore, type SessionSet, type SessionCardio } from '@/lib/store/gym-store'
 import { parseAiResponse } from '@/lib/ai/response-parser'
+import { ChatHttpError, getChatErrorMessage } from '@/lib/chat/error-message'
 import styles from './chat-interface.module.scss'
 
 export function V2ChatInterface() {
@@ -22,13 +23,14 @@ export function V2ChatInterface() {
       const response = await fetch(input, init)
       const model = response.headers.get('X-Model-Id')
       if (model) setActiveModel(model)
+      if (!response.ok) throw new ChatHttpError(response.status)
       return response
     },
   }), [setActiveModel])
 
   // Chat key resets when session changes — clears message history
   const chatKey = session?.id ?? 'no-session'
-  const { messages, status, sendMessage } = useChat({ transport, id: chatKey })
+  const { messages, status, sendMessage, error, regenerate } = useChat({ transport, id: chatKey })
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
@@ -165,6 +167,14 @@ export function V2ChatInterface() {
         })}
         {isLoading && (
           <div className={styles.typing}>Thinking...</div>
+        )}
+        {error && !isLoading && (
+          <div className={styles.error} role="alert">
+            <p>{getChatErrorMessage(error)}</p>
+            <button type="button" className={styles.retry} onClick={() => regenerate()}>
+              Retry
+            </button>
+          </div>
         )}
       </div>
       <ChatInput onSend={(text) => sendMessage({ text })} isLoading={isLoading} />
