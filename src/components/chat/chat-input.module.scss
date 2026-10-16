@@ -59,3 +59,35 @@
     cursor: not-allowed;
   }
 }
+
+.micButton {
+  padding: 0.625rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #333);
+  background: transparent;
+  color: var(--color-text, #e5e5e5);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s ease;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.micActive {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: white;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
