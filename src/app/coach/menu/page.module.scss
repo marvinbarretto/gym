@@ -1,0 +1,48 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem;
+}
+
+.hint {
+  color: var(--muted, #666);
+  margin: 0 0 1rem;
+}
+
+.menu {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  font: inherit;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+
+.submit {
+  margin-top: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  font: inherit;
+  border-radius: 8px;
+}
+
+.error {
+  color: #b00020;
+}
+
+.result {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.item {
+  margin: 0 0 0.5rem;
+}
