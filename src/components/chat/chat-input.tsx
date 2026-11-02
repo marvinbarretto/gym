@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, type FormEvent, type KeyboardEvent } from 'react'
+import { useSpeechRecognition } from '@/lib/hooks/use-speech-recognition'
 import styles from './chat-input.module.scss'
 
 interface ChatInputProps {
@@ -11,6 +12,19 @@ interface ChatInputProps {
 export function ChatInput({ onSend, isLoading }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const { supported, listening, transcript, start, stop } = useSpeechRecognition({
+    onEnd: (finalText) => {
+      // Silence or a stop tap ends the session: send what was heard
+      const text = finalText.trim()
+      if (text && !isLoading) onSend(text)
+      setInput('')
+    },
+  })
+
+  // Stream the live transcript into the textarea
+  useEffect(() => {
+    if (listening) setInput(transcript)
+  }, [listening, transcript])
 
   // Auto-resize textarea to fit content
   useEffect(() => {
@@ -53,6 +67,18 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
         autoFocus
         rows={1}
       />
+      {supported && (
+        <button
+          type="button"
+          className={`${styles.micButton} ${listening ? styles.micActive : ''}`}
+          onClick={listening ? stop : start}
+          disabled={isLoading}
+          aria-label={listening ? 'Stop recording' : 'Start voice input'}
+          aria-pressed={listening}
+        >
+          {listening ? 'Stop' : 'Mic'}
+        </button>
+      )}
       <button
         type="submit"
         className={styles.sendButton}
