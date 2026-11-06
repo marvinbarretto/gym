@@ -51,6 +51,15 @@ describe('coach proxy route', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('https://jimbo.test/api/coach/supplement/supp_x');
   });
 
+  it('forwards POST /api/coach/menu-advice but not GET', async () => {
+    fetchMock.mockResolvedValue(new Response(JSON.stringify({ item: 'x' }), { status: 200 }));
+    const ok = await handleProxy(req('POST', 'http://local/api/coach/menu-advice', { menu: 'x' }), ['menu-advice'], deps);
+    expect(ok.status).toBe(200);
+    expect(fetchMock.mock.calls[0][0]).toBe('https://jimbo.test/api/coach/menu-advice');
+    const bad = await handleProxy(req('GET', 'http://local/api/coach/menu-advice'), ['menu-advice'], deps);
+    expect(bad.status).toBe(404);
+  });
+
   it('returns 404 for non-allowlisted admin endpoints (tick)', async () => {
     const res = await handleProxy(req('POST', 'http://local/api/coach/tick'), ['tick'], deps);
     expect(res.status).toBe(404);

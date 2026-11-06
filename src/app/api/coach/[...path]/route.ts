@@ -20,6 +20,8 @@ const ALLOWLIST: AllowedRoute[] = [
   { method: 'GET', match: (p) => p.length === 1 && p[0] === 'protocol' },
   { method: 'GET', match: (p) => p.length === 1 && p[0] === 'inventory' },
   { method: 'GET', match: (p) => p.length === 1 && p[0] === 'supplement-log' },
+  // Menu help from the phone (JIM-6578).
+  { method: 'POST', match: (p) => p.length === 1 && p[0] === 'menu-advice' },
 ]
 
 function isAllowed(method: string, path: string[]): boolean {
