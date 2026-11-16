@@ -1,0 +1,99 @@
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  color: var(--color-muted, #999);
+  font-size: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.empty {
+  color: var(--color-muted, #999);
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.totals {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.totalCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--color-surface, #1e1e1e);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 0.5rem;
+}
+
+.totalValue {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.totalLabel {
+  color: var(--color-muted, #999);
+  font-size: 0.75rem;
+}
+
+.days {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dayCard {
+  padding: 0.75rem;
+  background: var(--color-surface, #1e1e1e);
+  border: 1px solid var(--color-border, #333);
+  border-radius: 0.5rem;
+}
+
+.dayHeader {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.dayDate {
+  font-weight: 600;
+}
+
+.daySteps {
+  color: var(--color-accent, #2563eb);
+  font-weight: 600;
+}
+
+.dayStats {
+  display: flex;
+  gap: 0.75rem;
+  color: var(--color-muted, #999);
+  font-size: 0.875rem;
+}
+
+.exercises {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.exercise {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-border, #333);
+  border-radius: 999px;
+  font-size: 0.75rem;
+}
